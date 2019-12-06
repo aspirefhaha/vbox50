@@ -1,0 +1,8 @@
+VBOX_WITH_HARDENING :=
+VBOX_SIGNING_MODE=test
+SDK_VBOX_OPENSSL-x86_INCS := D:/VBox/openssl-1.0.1t-86/output/include
+SDK_VBOX_OPENSSL-x86_LIBS := D:/VBox/openssl-1.0.1t-86/output/lib/ssleay32.lib D:/VBox/openssl-1.0.1t-86/output/lib/libeay32.lib
+SDK_VBOX_BLD_OPENSSL-x86_LIBS := $(SDK_VBOX_OPENSSL-x86_LIBS)
+SDK_VBOX_LIBCURL-x86_INCS := D:/VBox/curl-7.49.1-86/include
+SDK_VBOX_LIBCURL-x86_LIBS.x86 := D:/VBox/curl-7.49.1-86/lib/release-dll/libcurl.lib
+VBOX_WITH_VBOXSDL=
