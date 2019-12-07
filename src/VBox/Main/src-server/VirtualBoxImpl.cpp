@@ -53,6 +53,7 @@
 
 #include "Global.h"
 #include "MachineImpl.h"
+#include "UserInfoImpl.h"
 #include "MediumImpl.h"
 #include "SharedFolderImpl.h"
 #include "ProgressImpl.h"

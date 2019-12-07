@@ -12,6 +12,7 @@
 
 // for some reason Windows burns in sdk\...\winsock.h if this isn't included first
 #include "VBox/com/ptr.h"
+#include "VirtualBoxImpl.h"
 
 #include "UserInfoImpl.h"
 
@@ -24,12 +25,6 @@
 #if defined(RT_OS_LINUX) || defined(RT_OS_DARWIN) || defined(RT_OS_FREEBSD)
 # include <set>
 #endif
-
-#ifdef VBOX_WITH_RESOURCE_USAGE_API
-# include "PerformanceImpl.h"
-#endif /* VBOX_WITH_RESOURCE_USAGE_API */
-
-
 
 #if defined(RT_OS_DARWIN) && ARCH_BITS == 32
 # include <sys/types.h>
@@ -109,9 +104,7 @@ extern "C" char *getfullrawname(char *);
 #ifdef RT_OS_SOLARIS
 # include <iprt/ctype.h>
 #endif
-#ifdef VBOX_WITH_HOSTNETIF_API
-# include "netif.h"
-#endif
+
 
 /* XXX Solaris: definitions in /usr/include/sys/regset.h clash with hm_svm.h */
 #undef DS
@@ -221,6 +214,18 @@ void UserInfo::uninit()
 // IUserInfo public methods
 //
 ////////////////////////////////////////////////////////////////////////////////
+
+
+HRESULT UserInfo::i_loadSettings(const settings::UserInfo &data)
+{
+	return S_OK;
+}	
+
+HRESULT UserInfo::i_saveSettings(settings::UserInfo &data)
+{
+	return S_OK;
+}
+
 
 /**
  * Returns normal user pwd.

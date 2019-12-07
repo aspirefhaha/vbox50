@@ -539,7 +539,8 @@ void ConfigFileBase::readUserInfo(const xml::ElementNode & elmUserInfo,
 			userinfo.userPwd = userpwd;
 		}
 		else
-			throw ConfigFileError(this, elmUserInfo, N_("Required userinfo userpwd or adminpwd attribute is missing"));
+			throw ConfigFileError(this, NULL, N_("Required userinfo userpwd or adminpwd attribute is missing %s"),"nothing");
+
 		
 	}
 }
@@ -1089,7 +1090,7 @@ void ConfigFileBase::buildExtraData(xml::ElementNode &elmParent,
     }
 }
 
-void ConfigFileBase::buildUserInfo(xml::ElementNode &elmParent, const UserInfoEntry & userinfo)
+void ConfigFileBase::buildUserInfo(xml::ElementNode &elmParent, const UserInfo & userinfo)
 {
 	xml::ElementNode *pelmUserInfo = elmParent.createChild("UserInfo");
 	pelmUserInfo->setAttribute("adminpwd",userinfo.adminPwd);
