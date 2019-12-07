@@ -58,6 +58,7 @@
 # include "UIGChooser.h"
 # include "UIGDetails.h"
 # include "UIVMItem.h"
+# include "UIWizardLogin.h"
 # include "UIExtraDataManager.h"
 # include "VBoxGlobal.h"
 
@@ -103,6 +104,14 @@ UISelectorWindow::UISelectorWindow(UISelectorWindow **ppSelf, QWidget *pParent,
     ::darwinSetFrontMostProcess();
 #endif /* Q_WS_MAC */
 
+	if(true){
+		UISafePointerWizard pWizard = new UIWizardLogin(this);
+        pWizard->prepare();
+        pWizard->exec();
+        if (pWizard)
+            delete pWizard;
+
+	}
     /* Prepare: */
     prepareIcon();
     prepareMenuBar();

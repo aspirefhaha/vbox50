@@ -1210,6 +1210,7 @@ template<> QString toInternalString(const WizardType &wizardType)
         case WizardType_FirstRun:        strResult = "FirstRun"; break;
         case WizardType_NewVD:           strResult = "NewVD"; break;
         case WizardType_CloneVD:         strResult = "CloneVD"; break;
+		case WizardType_Login:			 strResult = "Login";	break;
         default:
         {
             AssertMsgFailed(("No text for wizard type=%d", wizardType));

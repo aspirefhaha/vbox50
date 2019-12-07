@@ -108,6 +108,9 @@ public:
     CVirtualBoxClient virtualBoxClient() const { return m_client; }
     /** Returns the copy of VirtualBox object wrapper. */
     CVirtualBox virtualBox() const { return m_vbox; }
+
+    /** Returns the UserInfo object wrapper. */
+    CUserInfo userInfo() const { return m_userInfo; }
     /** Returns the copy of VirtualBox host-object wrapper. */
     CHost host() const { return m_host; }
     /** Returns the symbolic VirtualBox home-folder representation. */
@@ -455,6 +458,8 @@ private:
     CVirtualBoxClient m_client;
     /** Holds the copy of VirtualBox object wrapper. */
     CVirtualBox m_vbox;
+    /** Holds the copy of UserInfo object wrapper. */
+    CUserInfo m_userInfo;
     /** Holds the copy of VirtualBox host-object wrapper. */
     CHost m_host;
     /** Holds the symbolic VirtualBox home-folder representation. */

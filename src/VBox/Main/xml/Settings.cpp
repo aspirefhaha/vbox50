@@ -533,7 +533,7 @@ void ConfigFileBase::readUserInfo(const xml::ElementNode & elmUserInfo,
 	if(elmUserInfo.nameEquals("UserInfo")){
 		//<UserInfo userpwd="1234" adminpwd="1234" />
 		Utf8Str adminpwd,userpwd;
-		if(elmUserInfo.getAttributeValue("userpwd",adminpwd) &&
+		if(elmUserInfo.getAttributeValue("userpwd",userpwd) &&
 		elmUserInfo.getAttributeValue("adminpwd",adminpwd)){
 			userinfo.adminPwd = adminpwd;
 			userinfo.userPwd = userpwd;
@@ -1570,6 +1570,8 @@ MainConfigFile::MainConfigFile(const Utf8Str *pstrFilename)
                     }
                     else if (pelmGlobalChild->nameEquals("ExtraData"))
                         readExtraData(*pelmGlobalChild, mapExtraDataItems);
+					else if(pelmGlobalChild->nameEquals("UserInfo"))
+						readUserInfo(*pelmGlobalChild, userInfo);
                     else if (pelmGlobalChild->nameEquals("MachineRegistry"))
                         readMachineRegistry(*pelmGlobalChild);
                     else if (    (pelmGlobalChild->nameEquals("MediaRegistry"))

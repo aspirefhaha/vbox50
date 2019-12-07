@@ -517,7 +517,8 @@ enum WizardType
     WizardType_ImportAppliance,
     WizardType_FirstRun,
     WizardType_NewVD,
-    WizardType_CloneVD
+    WizardType_CloneVD,
+    WizardType_Login
 };
 
 /** Common UI: Wizard modes. */

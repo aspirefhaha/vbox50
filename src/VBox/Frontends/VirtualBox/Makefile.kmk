@@ -187,7 +187,8 @@ VBOX_GUI_INC_DIRS = \
 	./src/wizards/clonevd \
 	./src/wizards/exportappliance \
 	./src/wizards/importappliance \
-	./src/wizards/firstrun
+	./src/wizards/firstrun \
+	./src/wizards/login
 
 ifdef VBOX_GUI_WITH_NETWORK_MANAGER
 VBOX_GUI_INC_DIRS += \
@@ -459,7 +460,9 @@ VirtualBox_QT_MOCHDRS = \
 	src/wizards/importappliance/UIWizardImportAppPageBasic2.h \
 	src/wizards/importappliance/UIWizardImportAppPageExpert.h \
 	src/wizards/firstrun/UIWizardFirstRun.h \
-	src/wizards/firstrun/UIWizardFirstRunPageBasic.h
+	src/wizards/firstrun/UIWizardFirstRunPageBasic.h \
+	src/wizards/login/UIWizardLogin.h \
+	src/wizards/login/UIWizardLoginPageBasic.h
 
 ifdef VBOX_GUI_WITH_NETWORK_MANAGER
  VirtualBox_QT_MOCHDRS += \
@@ -742,7 +745,9 @@ VirtualBox_SOURCES = \
 	src/wizards/importappliance/UIWizardImportAppPageBasic2.cpp \
 	src/wizards/importappliance/UIWizardImportAppPageExpert.cpp \
 	src/wizards/firstrun/UIWizardFirstRun.cpp \
-	src/wizards/firstrun/UIWizardFirstRunPageBasic.cpp
+	src/wizards/firstrun/UIWizardFirstRunPageBasic.cpp \
+	src/wizards/login/UIWizardLogin.cpp \
+	src/wizards/login/UIWizardLoginPageBasic.cpp
 
 ifdef VBOX_GUI_WITH_NETWORK_MANAGER
 VirtualBox_SOURCES += \
