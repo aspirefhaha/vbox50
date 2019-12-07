@@ -776,8 +776,9 @@ typedef enum LOGGROUP
     /** VSCSI group */
     LOG_GROUP_VSCSI,
     /** Webservice group. */
-    LOG_GROUP_WEBSERVICE
+    LOG_GROUP_WEBSERVICE,
     /* !!!ALPHABETICALLY!!! */
+	LOG_GROUP_MAIN_USERINFO
 } VBOX_LOGGROUP;
 
 

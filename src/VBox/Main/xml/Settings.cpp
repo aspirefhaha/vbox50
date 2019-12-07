@@ -527,6 +527,23 @@ void ConfigFileBase::readExtraData(const xml::ElementNode &elmExtraData,
     }
 }
 
+void ConfigFileBase::readUserInfo(const xml::ElementNode & elmUserInfo,
+								UserInfo & userinfo)
+{
+	if(elmUserInfo.nameEquals("UserInfo")){
+		//<UserInfo userpwd="1234" adminpwd="1234" />
+		Utf8Str adminpwd,userpwd;
+		if(elmUserInfo.getAttributeValue("userpwd",adminpwd) &&
+		elmUserInfo.getAttributeValue("adminpwd",adminpwd)){
+			userinfo.adminPwd = adminpwd;
+			userinfo.userPwd = userpwd;
+		}
+		else
+			throw ConfigFileError(this, elmUserInfo, N_("Required userinfo userpwd or adminpwd attribute is missing"));
+		
+	}
+}
+
 /**
  * Reads <USBDeviceFilter> entries from under the given elmDeviceFilters node and
  * stores them in the given linklist. This is in ConfigFileBase because it's used
@@ -1070,6 +1087,13 @@ void ConfigFileBase::buildExtraData(xml::ElementNode &elmParent,
             pelmThis->setAttribute("value", strValue);
         }
     }
+}
+
+void ConfigFileBase::buildUserInfo(xml::ElementNode &elmParent, const UserInfoEntry & userinfo)
+{
+	xml::ElementNode *pelmUserInfo = elmParent.createChild("UserInfo");
+	pelmUserInfo->setAttribute("adminpwd",userinfo.adminPwd);
+	pelmUserInfo->setAttribute("userpwd",userinfo.userPwd);
 }
 
 /**
@@ -1624,6 +1648,8 @@ void MainConfigFile::write(const com::Utf8Str strFilename)
     xml::ElementNode *pelmGlobal = m->pelmRoot->createChild("Global");
 
     buildExtraData(*pelmGlobal, mapExtraDataItems);
+
+	buildUserInfo(*pelmGlobal, userInfo);
 
     xml::ElementNode *pelmMachineRegistry = pelmGlobal->createChild("MachineRegistry");
     for (MachinesRegistry::const_iterator it = llMachines.begin();

@@ -23343,6 +23343,27 @@ Snapshot 1 (B.vdi)            Snapshot 1 (B.vdi)
     <attribute name="midlDoesNotLikeEmptyInterfaces" readonly="yes" type="boolean"/>
   </interface>
 
+  <interface name="IUserInfo" extends="$unknown" uuid="362ad55e-a5dc-415d-b5a5-84b227d9a3ad" 
+              wsmap="managed" reservedMethods="2" reservedAttributers="4">
+    <attribute name="parent" type="IVirtualBox" readonly="yes">
+      <desc>Associated parent object.</desc>
+    </attribute>
+    <attribute name="userpwd" type="wstring" readonly="yes" />
+    <attribute name="adminpwd" type="wstring" readonly="yes" />
+    <attribute name="currentuser" type="wstring" readonly="yes" />
+    <method name="login">
+      <param name="username" type="wstring" dir="in" />
+      <param name="pwd" type="wstring" dir="in" />
+      <param name="user" type="IUserInfo" dir="return" />
+    </method>
+    <method name="chgPwd">
+      <param name="username" type="wstring" dir="in" />
+      <param name="oldpwd" type="wstring" dir="in" />
+      <param name="newpwd" type="wstring" dir="in" />
+      <param name="user" type="IUserInfo" dir="return" />
+    </method>
+  </interface>
+
   <module name="VBoxSVC" context="LocalServer">
     <class name="VirtualBox" uuid="B1A7A4F2-47B9-4A1E-82B2-07CCD5323C3F"
            namespace="virtualbox.org">

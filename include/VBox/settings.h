@@ -173,6 +173,14 @@ struct MediaRegistry
     bool operator==(const MediaRegistry &m) const;
 };
 
+struct UserInfo
+{
+	com::Utf8Str	adminPwd;
+	com::Utf8Str 	userPwd;
+	com::Utf8Str 	currentuser;
+};
+
+
 /**
  *
  */
@@ -251,6 +259,8 @@ protected:
 
     void readExtraData(const xml::ElementNode &elmExtraData,
                        StringsMap &map);
+	void readUserInfo(const xml::ElementNode & elmUserInfo,
+								UserInfo & userinfo);
     void readUSBDeviceFilters(const xml::ElementNode &elmDeviceFilters,
                               USBDeviceFiltersList &ll);
     void readMediumOne(MediaType t, const xml::ElementNode &elmMedium, Medium &med);
@@ -263,6 +273,7 @@ protected:
     void createStubDocument();
 
     void buildExtraData(xml::ElementNode &elmParent, const StringsMap &me);
+	void buildUserInfo(xml::ElementNode & elmParent,const UserInfo & userInfo);
     void buildUSBDeviceFilters(xml::ElementNode &elmParent,
                                const USBDeviceFiltersList &ll,
                                bool fHostMode);
@@ -323,6 +334,7 @@ struct MachineRegistryEntry
     com::Guid       uuid;
     com::Utf8Str    strSettingsFile;
 };
+
 typedef std::list<MachineRegistryEntry> MachinesRegistry;
 
 struct DhcpOptValue
@@ -428,6 +440,7 @@ public:
     SystemProperties        systemProperties;
     MediaRegistry           mediaRegistry;
     MachinesRegistry        llMachines;
+	UserInfo				userInfo;
     DHCPServersList         llDhcpServers;
     NATNetworksList         llNATNetworks;
     StringsMap              mapExtraDataItems;

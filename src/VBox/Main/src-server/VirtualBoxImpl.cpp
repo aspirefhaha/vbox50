@@ -233,6 +233,7 @@ struct VirtualBox::Data
     // const objects not requiring locking
     const ComObjPtr<Host>               pHost;
     const ComObjPtr<SystemProperties>   pSystemProperties;
+	const ComObjPtr<UserInfo>			pUserInfo;
 #ifdef VBOX_WITH_RESOURCE_USAGE_API
     const ComObjPtr<PerformanceCollector> pPerformanceCollector;
 #endif /* VBOX_WITH_RESOURCE_USAGE_API */
@@ -4135,6 +4136,9 @@ HRESULT VirtualBox::i_saveSettings()
         // host data (USB filters)
         rc = m->pHost->i_saveSettings(m->pMainConfigFile->host);
         if (FAILED(rc)) throw rc;
+
+		rc = m->pUserInfo->i_saveSettings(m->pMainConfigFile->userInfo);
+		if (FAILED(rc)) throw rc;
 
         rc = m->pSystemProperties->i_saveSettings(m->pMainConfigFile->systemProperties);
         if (FAILED(rc)) throw rc;

@@ -38,6 +38,7 @@
 /* COM includes: */
 #include "VBox/com/Guid.h"
 #include "CHost.h"
+#include "CUserInfo.h"
 #include "CVirtualBoxClient.h"
 #include "CVirtualBox.h"
 #include "CSession.h"
