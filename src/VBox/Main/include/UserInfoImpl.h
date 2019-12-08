@@ -25,8 +25,6 @@ namespace settings
     struct UserInfo;
 }
 
-
-
 class ATL_NO_VTABLE UserInfo :
     public UserInfoWrap
 {
@@ -64,8 +62,8 @@ private:
     HRESULT getParent(ComPtr<IVirtualBox> &aParent);
 
     // wrapped IUserInfo methods
-    HRESULT login(com::Utf8Str &username, com::Utf8Str &pwd, ComPtr<IUserInfo> &userinfo);
-    HRESULT chgPwd(com::Utf8Str &username, com::Utf8Str &oldpwd, com::Utf8Str &newpwd, ComPtr<IUserInfo> &userinfo);
+    HRESULT login(const com::Utf8Str &username,const  com::Utf8Str &pwd, com::Utf8Str  &user);
+    HRESULT chgPwd(const com::Utf8Str &username,const com::Utf8Str &oldpwd,const  com::Utf8Str &newpwd, com::Utf8Str &user);
     
 
     // Internal Methods.

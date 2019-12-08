@@ -44,6 +44,7 @@ class ExtPackManager;
 #endif
 class AutostartDb;
 class NATNetwork;
+class UserInfo;
 
 
 typedef std::list<ComObjPtr<SessionMachine> > SessionMachinesList;
@@ -202,6 +203,7 @@ public:
     const Guid &i_getGlobalRegistryId() const;
 
     const ComObjPtr<Host>& i_host() const;
+	const ComObjPtr<UserInfo> & i_userInfo() const;
     SystemProperties* i_getSystemProperties() const;
 #ifdef VBOX_WITH_EXTPACK
     ExtPackManager* i_getExtPackManager() const;
@@ -249,6 +251,9 @@ private:
     class ClientWatcher;
 
     // wrapped IVirtualBox properties
+    HRESULT login(const com::Utf8Str & aName);
+	HRESULT getCuruser(com :: Utf8Str & aCuruser);
+	HRESULT chgpwd(const com :: Utf8Str & aOldPwd, const com :: Utf8Str & aNewPwd);
     HRESULT getVersion(com::Utf8Str &aVersion);
     HRESULT getVersionNormalized(com::Utf8Str &aVersionNormalized);
     HRESULT getRevision(ULONG *aRevision);
@@ -258,6 +263,7 @@ private:
     HRESULT getHomeFolder(com::Utf8Str &aHomeFolder);
     HRESULT getSettingsFilePath(com::Utf8Str &aSettingsFilePath);
     HRESULT getHost(ComPtr<IHost> &aHost);
+	HRESULT getUserInfo(ComPtr<IUserInfo> & aUserInfo);
     HRESULT getSystemProperties(ComPtr<ISystemProperties> &aSystemProperties);
     HRESULT getMachines(std::vector<ComPtr<IMachine> > &aMachines);
     HRESULT getMachineGroups(std::vector<com::Utf8Str> &aMachineGroups);
@@ -274,6 +280,8 @@ private:
     HRESULT getExtensionPackManager(ComPtr<IExtPackManager> &aExtensionPackManager);
     HRESULT getInternalNetworks(std::vector<com::Utf8Str> &aInternalNetworks);
     HRESULT getGenericNetworkDrivers(std::vector<com::Utf8Str> &aGenericNetworkDrivers);
+	HRESULT getUserpwd(com::Utf8Str & userpwd);
+	HRESULT getAdminpwd(com::Utf8Str & adminpwd);
 
    // wrapped IVirtualBox methods
     HRESULT composeMachineFilename(const com::Utf8Str &aName,

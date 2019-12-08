@@ -128,6 +128,7 @@ private:
     void prepareMenuFile(QMenu *pMenu);
     void prepareMenuGroup(QMenu *pMenu);
     void prepareMenuMachine(QMenu *pMenu);
+	void prepareMenuUser(QMenu * pMenu);
     void prepareMenuGroupStartOrShow(QMenu *pMenu);
     void prepareMenuMachineStartOrShow(QMenu *pMenu);
     void prepareMenuGroupClose(QMenu *pMenu);
@@ -193,6 +194,9 @@ private:
     /* 'Machine' menu action pointers: */
     QList<UIAction*> m_machineActions;
     QAction *m_pMachineMenuAction;
+
+	QList<UIAction*> m_userActions;
+	QAction * m_pUserMenuAction;
 
     /* Other variables: */
     QRect m_geometry;

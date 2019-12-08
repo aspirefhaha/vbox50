@@ -16,6 +16,7 @@
 # include "UIWizardLoginPageBasic.h"
 # include "VBoxGlobal.h"
 # include "UIMessageCenter.h"
+# include "QAbstractButton.h"
 
 /* COM includes: */
 
@@ -37,11 +38,17 @@ UIWizardLogin::UIWizardLogin(QWidget *pParent)
 void UIWizardLogin::retranslateUi()
 {
     /* Call to base-class: */
+	QWizard::setOption(QWizard::HaveCustomButton1,false);
     UIWizard::retranslateUi();
 
     /* Translate wizard: */
     setWindowTitle(tr("Login"));
     setButtonText(QWizard::FinishButton, tr("Enter"));
+	
+	QWizard::setOption(QWizard::NoBackButtonOnStartPage,true);
+	QWizard::setOption(QWizard::NoBackButtonOnLastPage,true);
+	(QWizard::button(QWizard::CustomButton1))->setEnabled(false);
+	(QWizard::button(QWizard::CustomButton1))->hide();
 }
 
 void UIWizardLogin::prepare()
@@ -64,6 +71,8 @@ void UIWizardLogin::prepare()
     }
     /* Call to base-class: */
     UIWizard::prepare();
+	
+	(QWizard::button(QWizard::CustomButton1))->hide();
 }
 
 

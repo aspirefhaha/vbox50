@@ -58,7 +58,6 @@
 # include "UIGChooser.h"
 # include "UIGDetails.h"
 # include "UIVMItem.h"
-# include "UIWizardLogin.h"
 # include "UIExtraDataManager.h"
 # include "VBoxGlobal.h"
 
@@ -103,15 +102,7 @@ UISelectorWindow::UISelectorWindow(UISelectorWindow **ppSelf, QWidget *pParent,
      * This is necessary for Qt versions > 4.3.3: */
     ::darwinSetFrontMostProcess();
 #endif /* Q_WS_MAC */
-
-	if(true){
-		UISafePointerWizard pWizard = new UIWizardLogin(this);
-        pWizard->prepare();
-        pWizard->exec();
-        if (pWizard)
-            delete pWizard;
-
-	}
+	
     /* Prepare: */
     prepareIcon();
     prepareMenuBar();
@@ -1197,6 +1188,9 @@ void UISelectorWindow::prepareMenuBar()
     prepareMenuMachine(actionPool()->action(UIActionIndexST_M_Machine)->menu());
     m_pMachineMenuAction = menuBar()->addMenu(actionPool()->action(UIActionIndexST_M_Machine)->menu());
 
+	prepareMenuUser(actionPool()->action(UIActionIndexST_M_User)->menu());
+	m_pUserMenuAction = menuBar()->addMenu(actionPool()->action(UIActionIndexST_M_User)->menu());
+	
 #ifdef Q_WS_MAC
     menuBar()->addMenu(UIWindowMenuManager::instance(this)->createMenu(this));
 #endif /* Q_WS_MAC */
@@ -1317,6 +1311,14 @@ void UISelectorWindow::prepareMenuGroup(QMenu *pMenu)
                    << actionPool()->action(UIActionIndexST_M_Group_S_ShowInFileManager)
                    << actionPool()->action(UIActionIndexST_M_Group_S_CreateShortcut)
                    << actionPool()->action(UIActionIndexST_M_Group_S_Sort);
+}
+
+void UISelectorWindow::prepareMenuUser(QMenu * pMenu)
+{
+	if(!pMenu->isEmpty())
+		return;
+	pMenu->addAction(actionPool()->action(UIActionIndexST_M_User_ChgPWd));
+	m_userActions << actionPool()->action(UIActionIndexST_M_User_ChgPWd);
 }
 
 void UISelectorWindow::prepareMenuMachine(QMenu *pMenu)
@@ -1461,10 +1463,15 @@ void UISelectorWindow::prepareWidgets()
     if (toolBarIconSize.width() < 32 || toolBarIconSize.height() < 32)
         mVMToolBar->setIconSize(QSize(32, 32));
     mVMToolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_New));
-    mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Settings));
-    mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Discard));
-    mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_Machine_M_StartOrShow));
+
+	CVirtualBox vbox = vboxGlobal().virtualBox();
+	if(vbox.GetCuruser() == "admin"){
+	    mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_New));
+	    mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Settings));
+	    mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Discard));
+	    mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_Machine_M_StartOrShow));
+	}
+	mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_User_ChgPWd));
 
     /* Prepare graphics VM list: */
     m_pChooser = new UIGChooser(this);

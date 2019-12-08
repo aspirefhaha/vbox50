@@ -26,6 +26,7 @@
 # include "UIMessageCenter.h"
 # include "UISelectorWindow.h"
 # include "UIMachine.h"
+# include "UIWizardLogin.h"
 # include "VBoxUtils.h"
 # include "UIModalWindowManager.h"
 # include "UIExtraDataManager.h"
@@ -438,6 +439,7 @@ extern "C" DECLEXPORT(int) TrustedMain(int argc, char **argv, char ** /*envp*/)
         /* Create modal-window manager: */
         UIModalWindowManager::create();
 
+		
         /* Create global UI instance: */
         VBoxGlobal::create();
 
@@ -491,12 +493,23 @@ extern "C" DECLEXPORT(int) TrustedMain(int argc, char **argv, char ** /*envp*/)
                     msgCenter().showBetaBuildWarning();
 # endif /* !DEBUG */
 #endif /* !VBOX_BLEEDING_EDGE*/
+				//int loginres = 0;
+				UISafePointerWizard pWizard = new UIWizardLogin();
+		        pWizard->prepare();
+				int loginres = pWizard->exec();
+		        //AssertMsg((loginres==1),("Login falied %d",loginres));
+		        if (pWizard)
+		            delete pWizard;
+				if(loginres!=0){
+					/* Create/show selector window: */
+	                vboxGlobal().selectorWnd().show();
 
-                /* Create/show selector window: */
-                vboxGlobal().selectorWnd().show();
+	                /* Start application: */
+	                iResultCode = a.exec();
+				}
 
-                /* Start application: */
-                iResultCode = a.exec();
+		
+                
             }
         }
         while (0);

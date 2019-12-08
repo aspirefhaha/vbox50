@@ -14,6 +14,7 @@
 /* Qt includes: */
 # include <QVBoxLayout>
 # include <QHBoxLayout>
+# include <QFormLayout>
 
 /* GUI includes: */
 # include "UIWizardLoginPageBasic.h"
@@ -24,6 +25,9 @@
 
 # include "QIToolButton.h"
 # include "QIRichTextLabel.h"
+# include "QLineEdit.h"
+# include "QRadioButton.h"
+# include "QButtonGroup.h"
 
 
 #endif /* !VBOX_WITH_PRECOMPILED_HEADERS */
@@ -54,19 +58,37 @@ UIWizardLoginPageBasic::UIWizardLoginPageBasic()
         pMainLayout->setContentsMargins(8, 0, 8, 0);
         pMainLayout->setSpacing(10);
         m_pLabel = new QIRichTextLabel(this);
-        QHBoxLayout *pSourceDiskLayout = new QHBoxLayout;
+		m_pTip = new QIRichTextLabel(this);
+        QFormLayout *pUserPwdLayout = new QFormLayout;
+		QHBoxLayout * pRoleLayout = new QHBoxLayout;
         {
             
-            m_pSelectMediaButton = new QIToolButton(this);
-            {
-                m_pSelectMediaButton->setIcon(UIIconPool::iconSet(":/select_file_16px.png", ":/select_file_disabled_16px.png"));
-                m_pSelectMediaButton->setAutoRaise(true);
-            }
+            //m_pSelectMediaButton = new QIToolButton(this);
+            //{
+            //    m_pSelectMediaButton->setIcon(UIIconPool::iconSet(":/select_file_16px.png", ":/select_file_disabled_16px.png"));
+            //    m_pSelectMediaButton->setAutoRaise(true);
+            //}
             //pSourceDiskLayout->addWidget(m_pMediaSelector);
-            pSourceDiskLayout->addWidget(m_pSelectMediaButton);
+            //pSourceDiskLayout->addWidget(m_pSelectMediaButton);
+            m_pRole = new QButtonGroup(this);
+			m_pAdmin = new QRadioButton(UIWizardLogin::tr("Admin"),this);
+    		m_pAdmin->setIcon(QIcon(":/select_file_16px.png"));
+			m_pUser = new QRadioButton(UIWizardLogin::tr("User"),this);
+			m_pUser->setIcon(QIcon(":/select_file_disabled_16px.png"));
+			m_pUser->setChecked(true);
+			m_pRole->addButton(m_pAdmin,0);
+			m_pRole->addButton(m_pUser,1);
+			m_pPwd = new QLineEdit(this);
+			m_pPwd->setEchoMode(QLineEdit::Password);
+			pRoleLayout->addWidget(m_pAdmin);
+			pRoleLayout->addWidget(m_pUser);
+			
+			pUserPwdLayout->addRow(UIWizardLogin::tr("Role"),pRoleLayout);
+			pUserPwdLayout->addRow(UIWizardLogin::tr("Password"),m_pPwd);
         }
         pMainLayout->addWidget(m_pLabel);
-        pMainLayout->addLayout(pSourceDiskLayout);
+        pMainLayout->addLayout(pUserPwdLayout);
+		pMainLayout->addWidget(m_pTip);
         pMainLayout->addStretch();
     }
 
@@ -77,22 +99,18 @@ UIWizardLoginPageBasic::UIWizardLoginPageBasic()
     /* Register fields: */
     registerField("source", this, "source");
     registerField("id", this, "id");
+	registerField("pwd*",m_pPwd);
 }
 
 void UIWizardLoginPageBasic::retranslateUi()
 {
     /* Translate widgets: */
     
-    m_pLabel->setText(UIWizardLogin::tr("<p>Please select a virtual optical disk file "
-                                           "or a physical optical drive containing a disk "
-                                           "to start your new virtual machine from.</p>"
-                                           "<p>The disk should be suitable for starting a computer from "
-                                           "and should contain the operating system you wish to install "
-                                           "on the virtual machine if you want to do that now. "
-                                           "The disk will be ejected from the virtual drive "
-                                           "automatically next time you switch the virtual machine off, "
-                                           "but you can also do this yourself if needed using the Devices menu.</p>"));
-    m_pSelectMediaButton->setToolTip(UIWizardLogin::tr("Choose a virtual optical disk file..."));
+    m_pLabel->setText(UIWizardLogin::tr("<p>Please select a role for further operations, "
+                                           "Admin can change all USB virtual enviroment config."
+                                           "User can only modify few virtual config."
+                                           "Don't forget enter password for the role you choosed</p>"));
+    //m_pSelectMediaButton->setToolTip(UIWizardLogin::tr("Choose a virtual optical disk file..."));
 }
 
 void UIWizardLoginPageBasic::initializePage()
@@ -111,10 +129,40 @@ bool UIWizardLoginPageBasic::isComplete() const
 bool UIWizardLoginPageBasic::validatePage()
 {
     /* Initial result: */
-    bool fResult = true;
-
-    /* Lock finish button: */
+    bool fResult = false;
+	
     startProcessing();
+	CVirtualBox vbox = vboxGlobal().virtualBox();
+	//CUserInfo userinfo = vboxGlobal().userInfo();
+	//QString userpwd = userinfo.GetUserpwd();
+	//QString adminpwd = userinfo.GetAdminpwd();
+	QString userpwd = vbox.GetUserpwd();
+	QString	adminpwd = vbox.GetAdminpwd();
+	QString inputpwd = field("pwd").toString();
+
+	if(m_pRole->checkedId() == 0){
+		if(inputpwd == adminpwd){
+			vbox.Login("admin");
+			fResult = true;
+		}
+		else
+			m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed as Admin</font>"));
+	}
+	else if(m_pRole->checkedId() == 1){
+		if(inputpwd == userpwd){
+			vbox.Login("user");
+			fResult = true;
+		}
+		else 
+			m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed as User</font>"));
+	}
+	else 
+	{
+		m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed</font>"));
+	}
+	
+    /* Lock finish button: */
+	//fResult = false;
 
     /* Try to insert chosen medium: */
     //if (fResult)

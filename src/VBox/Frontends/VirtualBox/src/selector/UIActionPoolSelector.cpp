@@ -370,7 +370,34 @@ protected:
         setName(QApplication::translate("UIActionPool", "&Machine"));
     }
 };
+#if 0
+class UIActionSimpleUserChgPwd: public UIActionSimple
+{
+	Q_OBJECT;
+public :
+	UIActionSimpleUserChgPwd(UIActionPool * pParent)
+		: UIActionSimple(pParent, ":/user_chgpwd_32px.png",":/user_chgpwd_16px.png"){}
 
+protected:
+	QString shortcutExtraDataID() const
+    {
+        return QString("Chgpwd");
+    }
+
+    QKeySequence defaultShortcut(UIActionPoolType) const
+    {
+        return QKeySequence("Ctrl+W");
+    }
+
+    void retranslateUi()
+    {
+        setName(QApplication::translate("UIActionPool", "&ChgPwd..."));
+        setStatusTip(QApplication::translate("UIActionPool", "Change User Passwrod"));
+        setToolTip(text().remove('&').remove('.') +
+                   (shortcut().toString().isEmpty() ? "" : QString(" (%1)").arg(shortcut().toString())));
+    }
+};
+#endif
 class UIActionSimpleMachineNew : public UIActionSimple
 {
     Q_OBJECT;
@@ -1059,6 +1086,9 @@ void UIActionPoolSelector::preparePool()
     m_pool[UIActionIndexST_M_Machine_S_ShowInFileManager] = new UIActionSimpleCommonShowInFileManager(this);
     m_pool[UIActionIndexST_M_Machine_S_CreateShortcut] = new UIActionSimpleCommonCreateShortcut(this);
     m_pool[UIActionIndexST_M_Machine_S_SortParent] = new UIActionSimpleMachineSortParent(this);
+
+	m_pool[UIActionIndexST_M_User] = new UIActionMenuUser(this);
+	m_pool[UIActionIndexST_M_User_ChgPWd] = new UIActionSimpleUserChgPwd(this);
 
     /* Call to base-class: */
     UIActionPool::preparePool();

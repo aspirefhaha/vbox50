@@ -3886,6 +3886,7 @@ void VBoxGlobal::prepare()
     /* Fetch corresponding objects/values: */
     m_vbox = virtualBoxClient().GetVirtualBox();
     m_host = virtualBox().GetHost();
+	m_userInfo = virtualBox().GetUserInfo();
     m_strHomeFolder = virtualBox().GetHomeFolder();
 
     /* Watch for the VBoxSVC availability changes: */
@@ -4294,6 +4295,7 @@ void VBoxGlobal::cleanup()
     mTypes.clear();
 
     /* the last steps to ensure we don't use COM any more */
+	m_userInfo.detach();
     m_host.detach();
     m_vbox.detach();
     m_client.detach();

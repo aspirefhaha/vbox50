@@ -530,4 +530,50 @@ protected:
     QMap<UIActionRestrictionLevel, UIExtraDataMetaDefs::MenuHelpActionType> m_restrictedActionsMenuHelp;
 };
 
+class UIActionSimpleUserChgPwd: public UIActionSimple
+{
+	Q_OBJECT;
+public :
+	UIActionSimpleUserChgPwd(UIActionPool * pParent)
+		: UIActionSimple(pParent, ":/user_chgpwd_32px.png",":/user_chgpwd_16px.png"){}
+
+protected:
+	QString shortcutExtraDataID() const
+    {
+        return QString("Chgpwd");
+    }
+
+    QKeySequence defaultShortcut(UIActionPoolType) const
+    {
+        return QKeySequence("Ctrl+W");
+    }
+
+    void retranslateUi()
+    {
+        setName(QApplication::translate("UIActionPool", "&ChgPwd..."));
+        setStatusTip(QApplication::translate("UIActionPool", "Change User Passwrod"));
+        setToolTip(text().remove('&').remove('.') +
+                   (shortcut().toString().isEmpty() ? "" : QString(" (%1)").arg(shortcut().toString())));
+    }
+};
+
+class UIActionMenuUser : public UIActionMenu
+{
+    Q_OBJECT;
+
+public:
+
+    UIActionMenuUser(UIActionPool *pParent)
+        : UIActionMenu(pParent) {}
+
+protected:
+
+    void retranslateUi()
+    {
+        setName(QApplication::translate("UIActionPool", "&User"));
+    }
+};
+
+
+
 #endif /* !___UIActionPool_h___ */

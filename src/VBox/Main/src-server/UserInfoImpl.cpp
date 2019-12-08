@@ -273,13 +273,13 @@ HRESULT UserInfo::getParent(ComPtr<IVirtualBox> &aParent)
 
 }
 
-HRESULT UserInfo::login(com::Utf8Str &username, com::Utf8Str &pwd, ComPtr<IUserInfo> &userinfo)
+HRESULT UserInfo::login(const com::Utf8Str &username, const com::Utf8Str &pwd, com::Utf8Str &user)
 {
 	return S_OK;
 }
 
 
-HRESULT UserInfo::chgPwd(com::Utf8Str &username, com::Utf8Str &oldpwd, com::Utf8Str &newpwd, ComPtr<IUserInfo> &userinfo)
+HRESULT UserInfo::chgPwd(const com::Utf8Str &username, const com::Utf8Str &oldpwd,const  com::Utf8Str &newpwd, com::Utf8Str &user)
 {
 	return S_OK;
 }

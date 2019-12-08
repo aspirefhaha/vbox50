@@ -30,7 +30,7 @@ public:
     };
 
     /* Constructor: */
-    UIWizardLogin(QWidget *pParent);
+    UIWizardLogin(QWidget *pParent=NULL);
 
 protected:
 
@@ -46,7 +46,6 @@ private:
     void prepare();
 
 
-    bool m_fHardDiskWasSet;
 };
 
 #endif // __UIWizardLogin_h__

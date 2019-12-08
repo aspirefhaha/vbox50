@@ -87,6 +87,10 @@ enum UIActionIndexST
     UIActionIndexST_M_Machine_S_ShowInFileManager,
     UIActionIndexST_M_Machine_S_CreateShortcut,
     UIActionIndexST_M_Machine_S_SortParent,
+    
+    /* 'User Config' menu actions: */
+	UIActionIndexST_M_User,
+    UIActionIndexST_M_User_ChgPWd,
 
     /* Maximum index: */
     UIActionIndexST_Max

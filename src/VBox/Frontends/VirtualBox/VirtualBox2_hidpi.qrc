@@ -234,6 +234,8 @@
         <file alias="vm_group_remove_disabled_16px_hidpi.png">images/hidpi/vm_group_remove_disabled_16px_hidpi.png</file>
         <file alias="vm_new_16px_hidpi.png">images/hidpi/vm_new_16px_hidpi.png</file>
         <file alias="vm_new_32px_hidpi.png">images/hidpi/vm_new_32px_hidpi.png</file>
+        <file alias="user_chgpwd_32px.png">images/user_chgpwd_32px.png</file>
+        <file alias="user_chgpwd_16pxlpng">images/user_chgpwd_16px.png</file>
         <file alias="vm_open_filemanager_16px_hidpi.png">images/hidpi/vm_open_filemanager_16px_hidpi.png</file>
         <file alias="vm_open_filemanager_disabled_16px_hidpi.png">images/hidpi/vm_open_filemanager_disabled_16px_hidpi.png</file>
         <file alias="vm_pause_16px_hidpi.png">images/hidpi/vm_pause_16px_hidpi.png</file>

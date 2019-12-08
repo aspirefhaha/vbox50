@@ -233,8 +233,11 @@ struct VirtualBox::Data
 
     // const objects not requiring locking
     const ComObjPtr<Host>               pHost;
-    const ComObjPtr<SystemProperties>   pSystemProperties;
 	const ComObjPtr<UserInfo>			pUserInfo;
+	const Utf8Str						strAdminPwd;
+	const Utf8Str						strUserPwd;
+	const Utf8Str						strCuruser;
+    const ComObjPtr<SystemProperties>   pSystemProperties;
 #ifdef VBOX_WITH_RESOURCE_USAGE_API
     const ComObjPtr<PerformanceCollector> pPerformanceCollector;
 #endif /* VBOX_WITH_RESOURCE_USAGE_API */
@@ -429,6 +432,17 @@ HRESULT VirtualBox::init()
 
         rc = m->pHost->i_loadSettings(m->pMainConfigFile->host);
         if (FAILED(rc)) throw rc;
+
+		unconst(m->pUserInfo).createObject();
+		rc = m->pUserInfo->init(this);
+		ComAssertComRCThrowRC(rc);
+
+
+		rc = m->pUserInfo->i_loadSettings(m->pMainConfigFile->userInfo);
+		if(FAILED(rc)) throw rc;
+
+		unconst(m->strAdminPwd) = m->pMainConfigFile->userInfo.adminPwd;
+		unconst(m->strUserPwd) = m->pMainConfigFile->userInfo.userPwd;
 
         /*
          * Create autostart database object early, because the system properties
@@ -784,6 +798,12 @@ void VirtualBox::uninit()
         unconst(m->pHost).setNull();
     }
 
+	if(m->pUserInfo)
+	{
+		m->pUserInfo->uninit();
+		unconst(m->pUserInfo).setNull();
+	}
+
 #ifdef VBOX_WITH_RESOURCE_USAGE_API
     if (m->pPerformanceCollector)
     {
@@ -848,6 +868,24 @@ void VirtualBox::uninit()
 
 // Wrapped IVirtualBox properties
 /////////////////////////////////////////////////////////////////////////////
+HRESULT VirtualBox::getAdminpwd(com::Utf8Str & aAdminPwd)
+{
+	aAdminPwd = m->strAdminPwd;
+	return S_OK;
+}
+
+HRESULT VirtualBox::getUserpwd(com::Utf8Str & aUserPwd)
+{
+	aUserPwd = m->strUserPwd;
+	return S_OK;
+}
+
+HRESULT VirtualBox::getCuruser(com::Utf8Str & aCurUser)
+{
+	aCurUser = m->strCuruser;
+	return S_OK;
+}
+
 HRESULT VirtualBox::getVersion(com::Utf8Str &aVersion)
 {
     aVersion = sVersion;
@@ -916,6 +954,13 @@ HRESULT VirtualBox::getHost(ComPtr<IHost> &aHost)
     /* mHost is const, no need to lock */
     m->pHost.queryInterfaceTo(aHost.asOutParam());
     return S_OK;
+}
+
+HRESULT VirtualBox::getUserInfo(ComPtr<IUserInfo> & aUserInfo)
+{
+	/* mUserInfo is const , no need to lock */
+	m->pUserInfo.queryInterfaceTo(aUserInfo.asOutParam());
+	return S_OK;
 }
 
 HRESULT VirtualBox::getSystemProperties(ComPtr<ISystemProperties> &aSystemProperties)
@@ -1291,6 +1336,27 @@ HRESULT VirtualBox::checkFirmwarePresent(FirmwareType_T aFirmwareType,
 }
 // Wrapped IVirtualBox methods
 /////////////////////////////////////////////////////////////////////////////
+
+HRESULT VirtualBox::login(const com::Utf8Str & aName)
+{
+	unconst(m->strCuruser) = aName;
+	return S_OK;
+}
+
+HRESULT VirtualBox::chgpwd(	const com::Utf8Str & aOldPwd,
+							const com::Utf8Str & aNewPwd)
+{
+	if(m->strCuruser == "admin" && m->strAdminPwd == aOldPwd){
+		unconst(m->strAdminPwd) = aNewPwd;
+		return S_OK;
+	}
+	else if(m->strCuruser == "user" && m->strUserPwd == aOldPwd){
+		unconst(m->strUserPwd) = aNewPwd;
+		return S_OK;
+	}
+	return E_INVALIDARG;
+}
+
 
 /* Helper for VirtualBox::ComposeMachineFilename */
 static void sanitiseMachineFilename(Utf8Str &aName);
@@ -3618,6 +3684,11 @@ const Guid& VirtualBox::i_getGlobalRegistryId() const
 const ComObjPtr<Host>& VirtualBox::i_host() const
 {
     return m->pHost;
+}
+
+const ComObjPtr<UserInfo> & VirtualBox::i_userInfo() const
+{
+	return m->pUserInfo;
 }
 
 SystemProperties* VirtualBox::i_getSystemProperties() const

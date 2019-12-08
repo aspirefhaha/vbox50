@@ -16,6 +16,9 @@
 /* Forward declarations: */
 class QIToolButton;
 class QIRichTextLabel;
+class QLineEdit;
+class QRadioButton;
+class QButtonGroup;
 
 /* Single page of the First Run wizard (base part): */
 class UIWizardLoginPage : public UIWizardPageBase
@@ -35,7 +38,11 @@ protected:
 	
 
     /* Widgets: */
-    QIToolButton *m_pSelectMediaButton;
+    //QIToolButton *m_pSelectMediaButton;
+    QButtonGroup * m_pRole;
+    QRadioButton * m_pAdmin;
+	QRadioButton * m_pUser;
+	QLineEdit * m_pPwd;
 };
 
 /* Single page of the First Run wizard (basic extension): */
@@ -79,6 +86,7 @@ private:
 
     /* Widgets: */
     QIRichTextLabel *m_pLabel;
+	QIRichTextLabel * m_pTip;
 };
 
 #endif // __UIWizardFirstRunPageBasic_h__
