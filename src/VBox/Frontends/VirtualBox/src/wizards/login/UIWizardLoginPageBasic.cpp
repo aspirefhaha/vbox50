@@ -133,32 +133,39 @@ bool UIWizardLoginPageBasic::validatePage()
 	
     startProcessing();
 	CVirtualBox vbox = vboxGlobal().virtualBox();
+	QString curser = vbox.GetCuruser();
+	
+	
 	//CUserInfo userinfo = vboxGlobal().userInfo();
 	//QString userpwd = userinfo.GetUserpwd();
 	//QString adminpwd = userinfo.GetAdminpwd();
 	QString userpwd = vbox.GetUserpwd();
 	QString	adminpwd = vbox.GetAdminpwd();
 	QString inputpwd = field("pwd").toString();
-
-	if(m_pRole->checkedId() == 0){
-		if(inputpwd == adminpwd){
-			vbox.Login("admin");
-			fResult = true;
+	if(curser.isEmpty()){
+		if(m_pRole->checkedId() == 0){
+			if(inputpwd == adminpwd){
+				vbox.Login("admin");
+				fResult = true;
+			}
+			else
+				m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed as Admin</font>"));
 		}
-		else
-			m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed as Admin</font>"));
-	}
-	else if(m_pRole->checkedId() == 1){
-		if(inputpwd == userpwd){
-			vbox.Login("user");
-			fResult = true;
+		else if(m_pRole->checkedId() == 1){
+			if(inputpwd == userpwd){
+				vbox.Login("user");
+				fResult = true;
+			}
+			else 
+				m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed as User</font>"));
 		}
 		else 
-			m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed as User</font>"));
+		{
+			m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed</font>"));
+		}
 	}
-	else 
-	{
-		m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed</font>"));
+	else{
+		fResult = true;
 	}
 	
     /* Lock finish button: */

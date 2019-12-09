@@ -1163,7 +1163,7 @@ void UISelectorWindow::prepareMenuBar()
 {
     /* Create action-pool: */
     m_pActionPool = UIActionPool::create(UIActionPoolType_Selector);
-
+	
     /* Prepare File-menu: */
     prepareMenuFile(actionPool()->action(UIActionIndexST_M_File)->menu());
     menuBar()->addMenu(actionPool()->action(UIActionIndexST_M_File)->menu());
@@ -1209,7 +1209,7 @@ void UISelectorWindow::prepareMenuFile(QMenu *pMenu)
         return;
 
     /* The Application / 'File' menu contents is very different depending on host type. */
-
+	
 #ifdef Q_WS_MAC
     /* 'About' action goes to Application menu: */
     pMenu->addAction(actionPool()->action(UIActionIndex_M_Application_S_About));
@@ -1238,31 +1238,35 @@ void UISelectorWindow::prepareMenuFile(QMenu *pMenu)
     pMenu->addAction(actionPool()->action(UIActionIndexST_M_File_S_ShowMediumManager));
 
 #else /* !Q_WS_MAC */
-
-    /* 'Preferences' action goes to 'File' menu: */
-    pMenu->addAction(actionPool()->action(UIActionIndex_M_Application_S_Preferences));
-    /* Separator after 'Preferences' action of the 'File' menu: */
-    pMenu->addSeparator();
-    /* 'Import Appliance' action goes to 'File' menu: */
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_File_S_ImportAppliance));
-    /* 'Export Appliance' action goes to 'File' menu: */
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_File_S_ExportAppliance));
-    /* Separator after 'Export Appliance' action of the 'File' menu: */
-    pMenu->addSeparator();
+	CVirtualBox vbox = vboxGlobal().virtualBox();
+	if(vbox.GetCuruser() == "admin"){
+    	/* 'Preferences' action goes to 'File' menu: */
+    	pMenu->addAction(actionPool()->action(UIActionIndex_M_Application_S_Preferences));
+    	/* Separator after 'Preferences' action of the 'File' menu: */
+    	pMenu->addSeparator();
+    	/* 'Import Appliance' action goes to 'File' menu: */
+    	pMenu->addAction(actionPool()->action(UIActionIndexST_M_File_S_ImportAppliance));
+    	/* 'Export Appliance' action goes to 'File' menu: */
+    	pMenu->addAction(actionPool()->action(UIActionIndexST_M_File_S_ExportAppliance));
+    	/* Separator after 'Export Appliance' action of the 'File' menu: */
+    	pMenu->addSeparator();
+	}
 # ifdef DEBUG
     /* 'Extra-data Manager' action goes to 'File' menu for Debug build: */
     pMenu->addAction(actionPool()->action(UIActionIndexST_M_File_S_ShowExtraDataManager));
 # endif /* DEBUG */
-    /* 'Show Medium Manager' action goes to 'File' menu: */
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_File_S_ShowMediumManager));
+	if(vbox.GetCuruser() == "admin"){
+    	/* 'Show Medium Manager' action goes to 'File' menu: */
+    	pMenu->addAction(actionPool()->action(UIActionIndexST_M_File_S_ShowMediumManager));
 # ifdef VBOX_GUI_WITH_NETWORK_MANAGER
-    /* 'Network Access Manager' action goes to 'File' menu: */
-    pMenu->addAction(actionPool()->action(UIActionIndex_M_Application_S_NetworkAccessManager));
-    /* 'Check for Updates' action goes to 'File' menu: */
-    pMenu->addAction(actionPool()->action(UIActionIndex_M_Application_S_CheckForUpdates));
+    	/* 'Network Access Manager' action goes to 'File' menu: */
+    	pMenu->addAction(actionPool()->action(UIActionIndex_M_Application_S_NetworkAccessManager));
+    	/* 'Check for Updates' action goes to 'File' menu: */
+    	pMenu->addAction(actionPool()->action(UIActionIndex_M_Application_S_CheckForUpdates));
 # endif /* VBOX_GUI_WITH_NETWORK_MANAGER */
-    /* 'Reset Warnings' action goes 'File' menu: */
-    pMenu->addAction(actionPool()->action(UIActionIndex_M_Application_S_ResetWarnings));
+    	/* 'Reset Warnings' action goes 'File' menu: */
+    	pMenu->addAction(actionPool()->action(UIActionIndex_M_Application_S_ResetWarnings));
+	}
     /* Separator after 'Reset Warnings' action of the 'File' menu: */
     pMenu->addSeparator();
     /* 'Close' action goes to 'File' menu: */
@@ -1328,43 +1332,57 @@ void UISelectorWindow::prepareMenuMachine(QMenu *pMenu)
         return;
 
     /* Populate Machine-menu: */
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_New));
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Add));
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Settings));
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Clone));
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Remove));
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_AddGroup));
+	CVirtualBox vbox = vboxGlobal().virtualBox();
+	if(vbox.GetCuruser() == "admin"){
+	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_New));
+	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Add));
+	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Settings));
+	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Clone));
+	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Remove));
+	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_AddGroup));
+	}
+	
     pMenu->addSeparator();
     pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_M_StartOrShow));
     pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_T_Pause));
     pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Reset));
     pMenu->addMenu(actionPool()->action(UIActionIndexST_M_Machine_M_Close)->menu());
-    pMenu->addSeparator();
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Discard));
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_ShowLogDialog));
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Refresh));
-    pMenu->addSeparator();
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_ShowInFileManager));
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_CreateShortcut));
-    pMenu->addSeparator();
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_SortParent));
+	if(vbox.GetCuruser() == "admin"){
+	    pMenu->addSeparator();
+	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Discard));
+	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_ShowLogDialog));
+	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Refresh));
+	    pMenu->addSeparator();
+	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_ShowInFileManager));
+	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_CreateShortcut));
+	    pMenu->addSeparator();
+	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_SortParent));
+	}
 
     /* Remember action list: */
-    m_machineActions << actionPool()->action(UIActionIndexST_M_Machine_S_New)
-                     << actionPool()->action(UIActionIndexST_M_Machine_S_Add)
-                     << actionPool()->action(UIActionIndexST_M_Machine_S_Settings)
-                     << actionPool()->action(UIActionIndexST_M_Machine_S_Clone)
-                     << actionPool()->action(UIActionIndexST_M_Machine_S_Remove)
-                     << actionPool()->action(UIActionIndexST_M_Machine_S_AddGroup)
-                     << actionPool()->action(UIActionIndexST_M_Machine_M_StartOrShow)
-                     << actionPool()->action(UIActionIndexST_M_Machine_T_Pause)
-                     << actionPool()->action(UIActionIndexST_M_Machine_S_Reset)
-                     << actionPool()->action(UIActionIndexST_M_Machine_S_Discard)
-                     << actionPool()->action(UIActionIndexST_M_Machine_S_ShowLogDialog)
-                     << actionPool()->action(UIActionIndexST_M_Machine_S_Refresh)
-                     << actionPool()->action(UIActionIndexST_M_Machine_S_ShowInFileManager)
-                     << actionPool()->action(UIActionIndexST_M_Machine_S_CreateShortcut)
-                     << actionPool()->action(UIActionIndexST_M_Machine_S_SortParent);
+	if(vbox.GetCuruser() == "admin"){
+	    m_machineActions << actionPool()->action(UIActionIndexST_M_Machine_S_New)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_S_Add)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_S_Settings)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_S_Clone)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_S_Remove)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_S_AddGroup)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_M_StartOrShow)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_T_Pause)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_S_Reset)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_S_Discard)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_S_ShowLogDialog)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_S_Refresh)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_S_ShowInFileManager)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_S_CreateShortcut)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_S_SortParent);
+	}
+	else{
+		m_machineActions << actionPool()->action(UIActionIndexST_M_Machine_M_StartOrShow)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_T_Pause)
+	                     << actionPool()->action(UIActionIndexST_M_Machine_S_Reset)
+	                     ;
+	}
 }
 
 void UISelectorWindow::prepareMenuGroupStartOrShow(QMenu *pMenu)
