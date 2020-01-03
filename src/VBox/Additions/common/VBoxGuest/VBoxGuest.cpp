@@ -1842,6 +1842,7 @@ static int vbgdCheckIfVmmReqIsAllowed(PVBOXGUESTDEVEXT pDevExt, PVBOXGUESTSESSIO
         case VMMDevReq_GetVRDPChangeRequest:
         case VMMDevReq_LogString:
         case VMMDevReq_GetSessionId:
+        case VMMDevReq_SafeEnvSwitch:
             enmRequired = kLevel_AllUsers;
             break;
 

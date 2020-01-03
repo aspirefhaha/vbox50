@@ -20,7 +20,7 @@
 #
 # VirtualBox Guest Additions for Haiku.
 # Copyright (c) 2011 Mike Smith <mike@scgtrp.net>
-#                    François Revol <revol@free.fr>
+#                    Franï¿½ois Revol <revol@free.fr>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -102,6 +102,7 @@ $$(VBoxTray_0_OUTDIR)/VBoxTray.rsrc: $$(VBoxTray_DEFPATH)/VBoxTray.rdef $$(VBoxT
 
 #	rc -I $(VBoxTray_DEFPATH)/../include -o $@ $<
 #	$(RM) -f $@
+#	$(APPEND) $@ 'IDI_SAFEENV ICON DISCARDABLE "$(subst /,\\,$(VBOX_WINDOWS_SAFEENV_ICON_FILE))"'
 #	$(APPEND) $@ 'IDI_VIRTUALBOX ICON DISCARDABLE "$(subst /,\\,$(VBOX_WINDOWS_ADDITIONS_ICON_FILE))"'
 
 ## The icon location is configurable.
@@ -112,7 +113,9 @@ $$(VBoxTray_0_OUTDIR)/VBoxTray.rsrc: $$(VBoxTray_DEFPATH)/VBoxTray.rdef $$(VBoxT
 ## Icon include file.
 #$$(VBoxTray_0_OUTDIR)/VBoxTray-icon.rc: $(VBOX_WINDOWS_ADDITIONS_ICON_FILE) $$(VBoxTray_DEFPATH)/Makefile.kmk | $$(dir $$@)
 #	$(RM) -f $@
+#	$(APPEND) $@ 'IDI_SAFEENV ICON DISCARDABLE "$(subst /,\\,$(VBOX_WINDOWS_SAFEENV_ICON_FILE))"'
 #	$(APPEND) $@ 'IDI_VIRTUALBOX ICON DISCARDABLE "$(subst /,\\,$(VBOX_WINDOWS_ADDITIONS_ICON_FILE))"'
+
 
 include	$(KBUILD_PATH)/subfooter.kmk
 

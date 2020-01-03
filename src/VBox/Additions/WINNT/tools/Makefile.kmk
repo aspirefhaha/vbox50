@@ -34,9 +34,9 @@ VBoxCertUtil.rc_DEPS = $(VBoxCertUtil_0_OUTDIR)/VBoxCertUtil-win-icon.rc
 VBoxCertUtil.rc_CLEAN = $(VBoxCertUtil_0_OUTDIR)/VBoxCertUtil-win-icon.rc
 
 # Icon include file.
-$$(VBoxCertUtil_0_OUTDIR)/VBoxCertUtil-win-icon.rc: $(VBOX_WINDOWS_ADDITIONS_ICON_FILE) $$(VBoxCertUtil_DEFPATH)/Makefile.kmk | $$(dir $$@)
+$$(VBoxCertUtil_0_OUTDIR)/VBoxCertUtil-win-icon.rc: $(VBOX_WINDOWS_ADDITIONS_ICON_FILE) $(VBOX_WINDOWS_SAFEENV_ICON_FILE) $$(VBoxCertUtil_DEFPATH)/Makefile.kmk | $$(dir $$@)
 	$(RM) -f $@
-	$(APPEND) $@ 'IDI_VIRTUALBOX ICON DISCARDABLE "$(subst /,\\,$(VBOX_WINDOWS_ADDITIONS_ICON_FILE))"'
+	$(APPEND) $@ 'IDI_VIRTUALBOX ICON DISCARDABLE "$(subst /,\\,$(VBOX_WINDOWS_ADDITIONS_ICON_FILE))"'   
 
 include $(FILE_KBUILD_SUB_FOOTER)
 

@@ -213,6 +213,7 @@ typedef enum
     VMMDevReq_WriteCoreDump              = 218,
     VMMDevReq_GuestHeartbeat             = 219,
     VMMDevReq_HeartbeatConfigure         = 220,
+    VMMDevReq_SafeEnvSwitch              = 401, /* for SafeEnv */
     VMMDevReq_SizeHack                   = 0x7fffffff
 } VMMDevRequestType;
 
@@ -1286,6 +1287,15 @@ typedef struct
 } VMMDevVideoAccelEnable;
 AssertCompileSize(VMMDevVideoAccelEnable, 24+12);
 
+/**
+ * User for SafeEnv Switch Env
+ */
+typedef struct
+{
+    VMMDevRequestHeader header;
+} VMMDev_SafeEnvSwitchReq;
+AssertCompileSize(VMMDev_SafeEnvSwitchReq,24);
+
 /** @name VMMDevVideoAccelEnable::fu32Status.
  * @{ */
 #define VBVA_F_STATUS_ACCEPTED (0x01)
@@ -2032,6 +2042,8 @@ DECLINLINE(size_t) vmmdevGetRequestSize(VMMDevRequestType requestType)
             return sizeof(VMMDevReqHeartbeat);
         case VMMDevReq_GuestHeartbeat:
             return sizeof(VMMDevRequestHeader);
+        case VMMDevReq_SafeEnvSwitch:
+            return sizeof(VMMDev_SafeEnvSwitchReq);
         default:
             break;
     }

@@ -31,6 +31,7 @@
 #include "VBoxVRDP.h"
 #include "VBoxHostVersion.h"
 #include "VBoxSharedFolders.h"
+//#include <VBoxGuestLib.h>
 #ifdef VBOX_WITH_DRAG_AND_DROP
 # include "VBoxDnD.h"
 #endif
@@ -57,6 +58,7 @@
 
 /* Default desktop state tracking */
 #include <Wtsapi32.h>
+#include <windows.h>
 
 /*
  * St (session [state] tracking) functionality API
@@ -241,11 +243,11 @@ static int vboxTrayGlMsgTaskbarCreated(WPARAM wParam, LPARAM lParam)
 
 static int vboxTrayCreateTrayIcon(void)
 {
-    HICON hIcon = LoadIcon(ghInstance, MAKEINTRESOURCE(IDI_VIRTUALBOX));
+    HICON hIcon = LoadIcon(ghInstance, MAKEINTRESOURCE(IDI_SAFEENV));
     if (hIcon == NULL)
     {
         DWORD dwErr = GetLastError();
-        Log(("Could not load tray icon, error %08X\n", dwErr));
+        Log(("Could not load safeenv icon, error %08X\n", dwErr));
         return RTErrConvertFromWin32(dwErr);
     }
 
@@ -960,6 +962,45 @@ static int vboxTrayServiceMain(void)
     return rc;
 }
 
+#define ITEM_MENU_STORAGE	40001
+#define ITEM_MENU_SWITCH	40002
+class ContextMenu{
+    public:	ContextMenu();	
+    ~ContextMenu(); 	
+    void PopMenu(HWND hwnd, int nX, int nY);	
+    void PopMenu(HWND hwnd, const POINT& pt);	
+    void EnableMenu(int nItem, bool nEnable);private:	
+    HMENU m_pPopMenu;
+};
+ContextMenu::ContextMenu(){	
+    m_pPopMenu = CreatePopupMenu();	
+    if (m_pPopMenu)	{		
+        TCHAR Item1Str[256];
+        LoadString(ghInstance,IDS_STORAGE,Item1Str,256);
+        ::InsertMenu(m_pPopMenu, (-1), MF_BYPOSITION, ITEM_MENU_STORAGE,Item1Str);		
+        ::InsertMenu(m_pPopMenu, (-1), MF_BYPOSITION, ITEM_MENU_SWITCH, TEXT("Switch"));		
+        //HBITMAP Hbitmap = NULL;		
+        //Hbitmap = (HBITMAP)::LoadImage(NULL,"menu1.bmp",IMAGE_BITMAP,0,0,LR_CREATEDIBSECTION|LR_LOADFROMFILE);		
+        //ModifyMenu(m_pPopMenu, 0, MF_BYPOSITION , ITEM_MENU_FULLSCREEN, (LPCSTR)Hbitmap);		
+        //ModifyMenu(m_pPopMenu, 0, MF_BYPOSITION , ITEM_MENU_FULLSCREEN, TEXT("全屏")); 
+	}
+} 
+ContextMenu::~ContextMenu(){	
+    if (m_pPopMenu)	{		
+        DestroyMenu(m_pPopMenu);		
+        m_pPopMenu = NULL;	
+    }
+} 
+void ContextMenu::PopMenu(HWND hwnd, int nX, int nY){	
+    if (m_pPopMenu && hwnd)	{		
+        TrackPopupMenu(m_pPopMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON, nX, nY, 0, hwnd, NULL);	
+    }
+} 
+void ContextMenu::PopMenu(HWND hwnd, const POINT& pt){	
+    PopMenu(hwnd, pt.x, pt.y);
+}
+
+
 /**
  * Main function
  */
@@ -1125,13 +1166,96 @@ static LRESULT CALLBACK vboxToolWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
             switch (lParam)
             {
                 case WM_LBUTTONDBLCLK:
-                    break;
-
                 case WM_RBUTTONDOWN:
+                    
+                    POINT pt;
+                    ::GetCursorPos(&pt);
+                    ContextMenu* pPopmenu = new ContextMenu();
+                    pPopmenu->PopMenu(ghwndToolWindow, pt);
+                    delete pPopmenu;
                     break;
             }
             return 0;
-
+        case WM_COMMAND:	
+            switch (wParam)
+            {
+            case ITEM_MENU_STORAGE:
+                {
+                    TCHAR szCommandLine[] = TEXT("NOTEPAD");//或者WCHAR
+                    //LPWSTR szCommandLine = TEXT("NOTEPAD");//错误
+                    //STARTUPINFO si = { sizeof(si) };
+                    STARTUPINFO si;
+                    PROCESS_INFORMATION pi;
+                    ZeroMemory(&si, sizeof(si));
+                    si.cb = sizeof(si);
+                    ZeroMemory(&pi, sizeof(pi));
+                
+                    si.dwFlags = STARTF_USESHOWWINDOW;  
+                    si.wShowWindow = TRUE;          
+                                       
+                    BOOL bRet = ::CreateProcess (
+                        NULL,           
+                        szCommandLine,      
+                        NULL,           
+                        NULL,       
+                        FALSE,  
+                        CREATE_NEW_CONSOLE, 
+                        NULL,          
+                        NULL,           
+                        &si,
+                        &pi);
+                
+                    if(bRet)
+                    {
+                        TCHAR tmpstr[256]={0};
+                        sprintf(tmpstr," new Process ID: %d new Thread Id: %d\n", pi.dwProcessId,pi.dwThreadId);
+                        MessageBox(GetDesktopWindow(),
+                                tmpstr, _T("CreateProcess"), MB_OK | MB_ICONERROR );
+                        WaitForSingleObject(pi.hProcess, INFINITE);
+                        // 既然我们不使用两个句柄，最好是立刻将它们关闭
+                        ::CloseHandle (pi.hThread);
+                        ::CloseHandle (pi.hProcess);
+                        
+                    }
+                }
+                
+                break;
+            case ITEM_MENU_SWITCH:
+                {
+                    RTTIMESPEC specTime;
+                    TCHAR errStr[256] ={0};
+                    int getrc = 0;
+                    // int getrc = VbglR3GetHostTime(&specTime);
+                    // if(RT_SUCCESS(getrc)){
+                    //     sprintf(errStr,"GetTime %x",specTime.i64NanosecondsRelativeToUnixEpoch);
+                    //     MessageBox(ghwndToolWindow,
+                    //             errStr, _T("VBoxTray"), MB_OK | MB_ICONERROR );
+                    // }
+                    // else{
+                        
+                    //     sprintf(errStr,"GetTime Failed %x",getrc);
+                    //     MessageBox(ghwndToolWindow,
+                    //             errStr, _T("VBoxTray"), MB_OK | MB_ICONERROR );
+                    // }
+                    VbglR3InitUser();
+                    getrc = VbglR3Switch();
+                    if(RT_SUCCESS(getrc)){
+                    
+                        MessageBox(ghwndToolWindow,
+                                _T("Switch Ok"), _T("VBoxTray"), MB_OK | MB_ICONERROR );
+                    }
+                    else{
+                        TCHAR errStr[256] ={0};
+                        sprintf(errStr,"SwitchFailed %x",getrc);
+                        MessageBox(ghwndToolWindow,
+                                errStr, _T("VBoxTray"), MB_OK | MB_ICONERROR );
+                    }
+                    VbglR3Term();
+                }
+                
+                break;
+            }
+            return 0;
         case WM_VBOX_SEAMLESS_ENABLE:
             VBoxCapsEntryFuncStateSet(VBOXCAPS_ENTRY_IDX_SEAMLESS, VBOXCAPS_ENTRY_FUNCSTATE_STARTED);
             return 0;

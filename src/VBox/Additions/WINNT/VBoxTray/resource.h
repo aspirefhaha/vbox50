@@ -14,4 +14,6 @@
  * hope that it will be useful, but WITHOUT ANY WARRANTY of any kind.
  */
 
-#define IDI_VIRTUALBOX 101
+#define IDI_SAFEENV 101
+#define IDI_VIRTUALBOX 102
+#define IDS_STORAGE 103

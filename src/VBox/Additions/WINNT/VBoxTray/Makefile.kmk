@@ -81,9 +81,14 @@ VBoxTray.rc_DEPS = $(VBoxTray_0_OUTDIR)/VBoxTray-icon.rc
 VBoxTray.rc_CLEAN = $(VBoxTray_0_OUTDIR)/VBoxTray-icon.rc
 
 # Icon include file.
-$$(VBoxTray_0_OUTDIR)/VBoxTray-icon.rc: $(VBOX_WINDOWS_ADDITIONS_ICON_FILE) $$(VBoxTray_DEFPATH)/Makefile.kmk | $$(dir $$@)
+$$(VBoxTray_0_OUTDIR)/VBoxTray-icon.rc: $(VBOX_WINDOWS_ADDITIONS_ICON_FILE) $(VBOX_WINDOWS_SAFEENV_ICON_FILE) $$(VBoxTray_DEFPATH)/Makefile.kmk | $$(dir $$@)
 	$(RM) -f $@
+	$(APPEND) $@ 'IDI_SAFEENV ICON DISCARDABLE "$(subst /,\\,$(VBOX_WINDOWS_SAFEENV_ICON_FILE))"'
 	$(APPEND) $@ 'IDI_VIRTUALBOX ICON DISCARDABLE "$(subst /,\\,$(VBOX_WINDOWS_ADDITIONS_ICON_FILE))"'
+	$(APPEND) $@ 'STRINGTABLE'
+	$(APPEND) $@ 'BEGIN'
+	$(APPEND) $@ '  IDS_STORAGE "ª∑æ≥Õ‚¥Ê¥¢"'
+	$(APPEND) $@ 'END'
 
 include $(FILE_KBUILD_SUB_FOOTER)
 

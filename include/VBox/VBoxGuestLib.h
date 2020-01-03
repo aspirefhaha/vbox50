@@ -428,6 +428,7 @@ VBGLR3DECL(void)    VbglR3Term(void);
 # ifdef ___iprt_time_h
 VBGLR3DECL(int)     VbglR3GetHostTime(PRTTIMESPEC pTime);
 # endif
+VBGLR3DECL(int)     VbglR3Switch(void);
 VBGLR3DECL(int)     VbglR3InterruptEventWaits(void);
 VBGLR3DECL(int)     VbglR3WriteLog(const char *pch, size_t cch);
 VBGLR3DECL(int)     VbglR3CtlFilterMask(uint32_t fOr, uint32_t fNot);

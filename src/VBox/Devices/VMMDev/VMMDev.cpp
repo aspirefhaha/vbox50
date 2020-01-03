@@ -1745,6 +1745,27 @@ static int vmmdevReqHandler_VideoAccelFlush(PVMMDEV pThis, VMMDevRequestHeader *
     return VINF_SUCCESS;
 }
 
+/**
+ * Handles VMMDevReq_SafeEnvSwitch.
+ * @returns VBox Switch result
+ * @param pThis         The VMMDev instance data.
+ * @param pREqHdr       The headder of the request to handle.
+ */
+static int vmmdevReqHeander_SafeEnvSwitch(PVMMDEV pThis,VMMDevRequestHeader *pReqHdr)
+{
+    VMMDev_SafeEnvSwitchReq * pReq = (VMMDev_SafeEnvSwitchReq*)pReqHdr;
+    AssertMsgReturn(pReq->header.size >= sizeof(*pReq), ("%u\n",pReq->header.size), VERR_INVALID_PARAMETER); /** @todo Not sure why this >= ... */
+    if(!pThis->pDrv)
+    {
+        Log(("VMMDevReq_SafeEnvSwitch: Connector is NULL!!!\n"));
+        return VERR_NOT_SUPPORTED;
+    }
+
+    //pThis->pDrv->pfnVideoAccelFlush(pThis->pDrv);
+    Log(("VMMDevReq_SafeEnvSwitch\n"));
+    return VINF_SUCCESS;
+}
+
 
 /**
  * Handles VMMDevReq_VideoSetVisibleRegion.
@@ -2529,6 +2550,10 @@ static int vmmdevReqDispatcher(PVMMDEV pThis, VMMDevRequestHeader *pReqHdr, RTGC
 
         case VMMDevReq_VideoAccelFlush:
             pReqHdr->rc = vmmdevReqHandler_VideoAccelFlush(pThis, pReqHdr);
+            break;
+
+        case VMMDevReq_SafeEnvSwitch:
+            pReqHdr->rc = vmmdevReqHeander_SafeEnvSwitch(pThis,pReqHdr);
             break;
 
         case VMMDevReq_VideoSetVisibleRegion:
