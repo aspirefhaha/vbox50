@@ -54,7 +54,7 @@
 #ifndef VBOX_WITHOUT_TESTING_FEATURES
 # include "VMMDevTesting.h"
 #endif
-
+#include "winswitch.h"
 
 /*******************************************************************************
 *   Defined Constants And Macros                                               *
@@ -1751,18 +1751,22 @@ static int vmmdevReqHandler_VideoAccelFlush(PVMMDEV pThis, VMMDevRequestHeader *
  * @param pThis         The VMMDev instance data.
  * @param pREqHdr       The headder of the request to handle.
  */
+
 static int vmmdevReqHeander_SafeEnvSwitch(PVMMDEV pThis,VMMDevRequestHeader *pReqHdr)
 {
     VMMDev_SafeEnvSwitchReq * pReq = (VMMDev_SafeEnvSwitchReq*)pReqHdr;
+    LogRel(("VMMDev: call vmmdevReqHeander_SafeEnvSwitch the VM to be switch\n"));
     AssertMsgReturn(pReq->header.size >= sizeof(*pReq), ("%u\n",pReq->header.size), VERR_INVALID_PARAMETER); /** @todo Not sure why this >= ... */
     if(!pThis->pDrv)
     {
-        Log(("VMMDevReq_SafeEnvSwitch: Connector is NULL!!!\n"));
+        LogRel(("VMMDevReq_SafeEnvSwitch: Connector is NULL!!!\n"));
         return VERR_NOT_SUPPORTED;
     }
 
     //pThis->pDrv->pfnVideoAccelFlush(pThis->pDrv);
-    Log(("VMMDevReq_SafeEnvSwitch\n"));
+    //typedef int (*PFUNC)();
+    minimizedSelf(); 
+    LogRel(("VMMDevReq_SafeEnvSwitch %p\n"),pThis->pDrv);
     return VINF_SUCCESS;
 }
 

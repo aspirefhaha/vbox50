@@ -3761,7 +3761,14 @@ bool VBoxGlobal::eventFilter (QObject *aObject, QEvent *aEvent)
             retranslateUi();
         }
     }
-
+    #if 1
+    else if(aEvent->type() == QEvent::User + 10)
+    {
+		LogRel(("Want showMinimized\n"));
+        this->activeMachineWindow()->showMinimized();
+		LogRel(("After minimized\n"));
+    }
+    #endif
     return QObject::eventFilter (aObject, aEvent);
 }
 

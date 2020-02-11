@@ -194,6 +194,10 @@ if !defined(VBOX_ONLY_EXTPACKS)         # Goes on almost to the end of the file.
   VBoxDD_SOURCES += Storage/DrvHostFloppy.cpp
  endif
 
+ if1of ($(KBUILD_TARGET), win)
+  VBoxDD_SOURCES +=VMMDev/winswitch.cpp 
+ endif
+
  VBoxDD_LIBS             = # more later.
  VBoxDD_LDFLAGS.darwin   = -install_name $(VBOX_DYLD_EXECUTABLE_PATH)/VBoxDD.dylib \
  	-framework CoreAudio \

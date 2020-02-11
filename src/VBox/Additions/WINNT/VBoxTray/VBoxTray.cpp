@@ -259,9 +259,13 @@ static int vboxTrayCreateTrayIcon(void)
     gNotifyIconData.uFlags           = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     gNotifyIconData.uCallbackMessage = WM_VBOXTRAY_TRAY_ICON;
     gNotifyIconData.hIcon            = hIcon;
-
-    sprintf(gNotifyIconData.szTip, "%s Guest Additions %d.%d.%dr%d",
-            VBOX_PRODUCT, VBOX_VERSION_MAJOR, VBOX_VERSION_MINOR, VBOX_VERSION_BUILD, VBOX_SVN_REV);
+    TCHAR Item1Str[256] ={0};
+    TCHAR Item2Str[256] ={0};
+    LoadString(ghInstance,IDS_SAFEENV,Item1Str,256);
+    LoadString(ghInstance,IDS_UPDATETIME,Item2Str,256);
+    sprintf(gNotifyIconData.szTip,"%s %s: %s %s %d\n",Item1Str,Item2Str, __DATE__, __TIME__,VBOX_SVN_REV);
+    //sprintf(gNotifyIconData.szTip, "%s Guest Additions %d.%d.%dr%d",
+    //        VBOX_PRODUCT, VBOX_VERSION_MAJOR, VBOX_VERSION_MINOR, VBOX_VERSION_BUILD, VBOX_SVN_REV);
 
     int rc = VINF_SUCCESS;
     if (!Shell_NotifyIcon(NIM_ADD, &gNotifyIconData))
@@ -964,6 +968,7 @@ static int vboxTrayServiceMain(void)
 
 #define ITEM_MENU_STORAGE	40001
 #define ITEM_MENU_SWITCH	40002
+#define ITEM_MENU_ABOUT     40003
 class ContextMenu{
     public:	ContextMenu();	
     ~ContextMenu(); 	
@@ -978,7 +983,10 @@ ContextMenu::ContextMenu(){
         TCHAR Item1Str[256];
         LoadString(ghInstance,IDS_STORAGE,Item1Str,256);
         ::InsertMenu(m_pPopMenu, (-1), MF_BYPOSITION, ITEM_MENU_STORAGE,Item1Str);		
-        ::InsertMenu(m_pPopMenu, (-1), MF_BYPOSITION, ITEM_MENU_SWITCH, TEXT("Switch"));		
+        LoadString(ghInstance,IDS_SWITCH,Item1Str,256);
+        ::InsertMenu(m_pPopMenu, (-1), MF_BYPOSITION, ITEM_MENU_SWITCH, Item1Str);
+        LoadString(ghInstance,IDS_ABOUT,Item1Str,256);
+        ::InsertMenu(m_pPopMenu, (-1), MF_BYPOSITION, ITEM_MENU_ABOUT, Item1Str);
         //HBITMAP Hbitmap = NULL;		
         //Hbitmap = (HBITMAP)::LoadImage(NULL,"menu1.bmp",IMAGE_BITMAP,0,0,LR_CREATEDIBSECTION|LR_LOADFROMFILE);		
         //ModifyMenu(m_pPopMenu, 0, MF_BYPOSITION , ITEM_MENU_FULLSCREEN, (LPCSTR)Hbitmap);		
@@ -1171,7 +1179,10 @@ static LRESULT CALLBACK vboxToolWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
                     POINT pt;
                     ::GetCursorPos(&pt);
                     ContextMenu* pPopmenu = new ContextMenu();
+                    SetForegroundWindow(ghwndToolWindow); //解决托盘菜单不消失
+                    //pMenu->TrackPopupMenu(TPM_LEFTALIGN,point.x,point.y,this);  
                     pPopmenu->PopMenu(ghwndToolWindow, pt);
+                    PostMessage(ghwndToolWindow,WM_NULL,0,0); //解决托盘菜单不消失
                     delete pPopmenu;
                     break;
             }
@@ -1179,9 +1190,21 @@ static LRESULT CALLBACK vboxToolWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
         case WM_COMMAND:	
             switch (wParam)
             {
+            case ITEM_MENU_ABOUT:
+                {
+                    TCHAR tmpstr[256]={0};
+                    TCHAR Item2Str[256]={0};
+                    TCHAR Item1Str[256]={0};
+                    LoadString(ghInstance,IDS_SAFEENV,Item1Str,256);
+                    LoadString(ghInstance,IDS_UPDATETIME,Item2Str,256);
+                    sprintf(tmpstr," %s: %s %s\n",Item2Str, __DATE__, __TIME__);
+                    MessageBox(GetDesktopWindow(),
+                            tmpstr, Item1Str, MB_OK | MB_ICONINFORMATION );
+                }
+                break;
             case ITEM_MENU_STORAGE:
                 {
-                    TCHAR szCommandLine[] = TEXT("NOTEPAD");//或者WCHAR
+                    TCHAR szCommandLine[] = TEXT("InSaveEnvDlg");//或者WCHAR
                     //LPWSTR szCommandLine = TEXT("NOTEPAD");//错误
                     //STARTUPINFO si = { sizeof(si) };
                     STARTUPINFO si;
@@ -1207,10 +1230,10 @@ static LRESULT CALLBACK vboxToolWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
                 
                     if(bRet)
                     {
-                        TCHAR tmpstr[256]={0};
-                        sprintf(tmpstr," new Process ID: %d new Thread Id: %d\n", pi.dwProcessId,pi.dwThreadId);
-                        MessageBox(GetDesktopWindow(),
-                                tmpstr, _T("CreateProcess"), MB_OK | MB_ICONERROR );
+                        //TCHAR tmpstr[256]={0};
+                        //sprintf(tmpstr," new Process ID: %d new Thread Id: %d\n", pi.dwProcessId,pi.dwThreadId);
+                        //MessageBox(GetDesktopWindow(),
+                        //        tmpstr, _T("CreateProcess"), MB_OK | MB_ICONERROR );
                         WaitForSingleObject(pi.hProcess, INFINITE);
                         // 既然我们不使用两个句柄，最好是立刻将它们关闭
                         ::CloseHandle (pi.hThread);
@@ -1225,24 +1248,13 @@ static LRESULT CALLBACK vboxToolWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
                     RTTIMESPEC specTime;
                     TCHAR errStr[256] ={0};
                     int getrc = 0;
-                    // int getrc = VbglR3GetHostTime(&specTime);
-                    // if(RT_SUCCESS(getrc)){
-                    //     sprintf(errStr,"GetTime %x",specTime.i64NanosecondsRelativeToUnixEpoch);
-                    //     MessageBox(ghwndToolWindow,
-                    //             errStr, _T("VBoxTray"), MB_OK | MB_ICONERROR );
-                    // }
-                    // else{
-                        
-                    //     sprintf(errStr,"GetTime Failed %x",getrc);
-                    //     MessageBox(ghwndToolWindow,
-                    //             errStr, _T("VBoxTray"), MB_OK | MB_ICONERROR );
-                    // }
                     VbglR3InitUser();
                     getrc = VbglR3Switch();
                     if(RT_SUCCESS(getrc)){
                     
-                        MessageBox(ghwndToolWindow,
-                                _T("Switch Ok"), _T("VBoxTray"), MB_OK | MB_ICONERROR );
+                        //MessageBox(ghwndToolWindow,
+                        //        _T("Switch Ok"), _T("VBoxTray"), MB_OK | MB_ICONERROR );
+                        Log(("Switch Ok\n"));
                     }
                     else{
                         TCHAR errStr[256] ={0};
