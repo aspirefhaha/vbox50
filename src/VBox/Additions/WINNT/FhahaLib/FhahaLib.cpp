@@ -136,13 +136,51 @@ static DWORD SimGetCurrentDirectory(DWORD nBufferLength, LPTSTR lpBuffer)
     return FALSE;
 }
 
+typedef struct _TJSimGetFileAttributesEx
+{
+    VBoxGuestHGCMCallInfo hdr;
+    HGCMFunctionParameter pFileName;  /*  IN LPTSTR */
+    HGCMFunctionParameter fInfoLevelId;  /*  uint32 */
+    HGCMFunctionParameter lpFileInformation; /* IN OUT LPWIN32_FIND_DATA */
+    HGCMFunctionParameter ret;   /* OUT DWORD BOOL */
+}TJSimGetFileAttributesEx;
+static BOOL SimGetFileAttributesEx(LPCSTR  lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId, LPVOID  lpFileInformation)
+{
+    TJSimGetFileAttributesEx Msg;
+
+    Msg.hdr.result = VERR_WRONG_ORDER;
+    Msg.hdr.u32ClientID = u32ClientId;
+    Msg.hdr.u32Function = GDLSIM_FN_GETFILEATTRIBUTESEX;
+    Msg.hdr.cParms = GDLSIM_CPARMS_GETFILEATTRIBUTESEX;
+    VbglHGCMParmUInt32Set(&Msg.ret, (uint32_t)0);
+    char tmpstr[1024] = {0,};
+    if(lpFileName && strlen(lpFileName)){
+        strcpy(tmpstr,lpFileName);
+        VbglHGCMParmPtrSet(&Msg.pFileName, (void *)tmpstr, strlen(tmpstr) + 1);
+    }
+    else
+        VbglHGCMParmPtrSet(&Msg.pFileName, NULL, 0);
+    VbglHGCMParmUInt32Set(&Msg.fInfoLevelId,(uint32_t)fInfoLevelId);
+    VbglHGCMParmPtrSet(&Msg.lpFileInformation, (void *)lpFileInformation, sizeof(WIN32_FILE_ATTRIBUTE_DATA));    
+    int rc = vbglR3DoIOCtl(VBOXGUEST_IOCTL_HGCM_CALL(sizeof(Msg)), &Msg, sizeof(Msg));
+    if (RT_SUCCESS(rc))
+    {
+        BOOL ret;
+        rc = VbglHGCMParmUInt32Get(&Msg.ret, (uint32_t*)&ret);
+        if (RT_SUCCESS(rc))
+        {
+            return ret;
+        }
+    }
+    return NULL;
+}
+
 typedef struct _TJSimFindFirstFile
 {
-
     VBoxGuestHGCMCallInfo hdr;
     HGCMFunctionParameter pFileName;  /*  IN LPTSTR */
     HGCMFunctionParameter pFileData; /* IN OUT LPWIN32_FIND_DATA */
-    HGCMFunctionParameter ret;   /* OUT DWORD */
+    HGCMFunctionParameter ret;   /* OUT uint64 for 64bit ptr as handle */
 
 } TJSimFindFirstFile;
 static long long SimFindFirstFile(LPCTSTR lpFileName, LPWIN32_FIND_DATA lpFindFileData)
@@ -153,7 +191,7 @@ static long long SimFindFirstFile(LPCTSTR lpFileName, LPWIN32_FIND_DATA lpFindFi
     Msg.hdr.u32ClientID = u32ClientId;
     Msg.hdr.u32Function = GDLSIM_FN_FINDFIRSTFILE;
     Msg.hdr.cParms = GDLSIM_CPARMS_FINDFIRSTFILE;
-    VbglHGCMParmUInt32Set(&Msg.ret, (uint32_t)0);
+    VbglHGCMParmUInt64Set(&Msg.ret, (uint64_t)0);
     char tmpstr[1024] = {0,};
     if(lpFileName && strlen(lpFileName)){
         strcpy(tmpstr,lpFileName);
@@ -166,7 +204,7 @@ static long long SimFindFirstFile(LPCTSTR lpFileName, LPWIN32_FIND_DATA lpFindFi
     if (RT_SUCCESS(rc))
     {
         long long ret;
-        rc = VbglHGCMParmUInt32Get(&Msg.ret, (uint32_t*)&ret);
+        rc = VbglHGCMParmUInt64Get(&Msg.ret, (uint64_t*)&ret);
         if (RT_SUCCESS(rc))
         {
             return ret;
@@ -1394,6 +1432,7 @@ FhahaLib_Func * WINAPI  FhahaLibGetProcStruct()
         glFuncs.PathFileExists = SimPathFileExists;
         glFuncs.GetDiskType = SimGetDiskType;
         //glFuncs.SHGetFolderPath = SimSHGetFolderPath;
+        glFuncs.GetFileAttributesEx = SimGetFileAttributesEx;
 	}
 	return &glFuncs;
 

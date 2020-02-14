@@ -410,6 +410,39 @@ void OutEnvFSService::guestCall(VBOXHGCMCALLHANDLE callHandle, uint32_t u32Clien
             }
             break;
 		}
+        case GDLSIM_FN_GETFILEATTRIBUTESEX:
+        {
+            LogRel(("svcCall: GDLSIM_FN_GETFILEATTRIBUTESEX  \n"));
+
+            /* Verify parameter count and types. */
+            if (cParms != GDLSIM_CPARMS_GETFILEATTRIBUTESEX)
+            {
+                rc = VERR_INVALID_PARAMETER;
+            }
+            else if (   paParms[0].type != VBOX_HGCM_SVC_PARM_PTR   /* lp name. */
+                     || paParms[1].type != VBOX_HGCM_SVC_PARM_32BIT   /* fInfoLevelId */  
+					 || paParms[2].type != VBOX_HGCM_SVC_PARM_PTR   /* lpFileInformation ptr */
+                     || paParms[3].type != VBOX_HGCM_SVC_PARM_32BIT   /* ret dword */  
+                    )
+            {
+                rc = VERR_INVALID_PARAMETER;
+            }
+            else
+            {
+                /* Fetch parameters. */
+                LPCTSTR lpFileName  = (LPCTSTR)paParms[0].u.pointer.addr;
+                GET_FILEEX_INFO_LEVELS fInfoLevelId = (GET_FILEEX_INFO_LEVELS) paParms[1].u.uint32;
+                LPVOID  lpFileInformation  = (LPVOID)paParms[2].u.pointer.addr;
+				BOOL  Out			= GetFileAttributesEx(lpFileName,fInfoLevelId,lpFileInformation);
+                LogRel(("GetFileAttributesEx:  Ret %d\n",Out));
+				paParms[3].u.uint32 = (uint32_t)Out;
+                if(Out)
+                    rc = VINF_SUCCESS;
+                else
+                    rc = VERR_GENERAL_FAILURE;
+            }
+            break;
+        }
         case GDLSIM_FN_FINDFIRSTFILE:
 		{
 			LogRel(("svcCall: GDLSIM_FN_FINDFIRSTFILE  \n"));
@@ -421,7 +454,7 @@ void OutEnvFSService::guestCall(VBOXHGCMCALLHANDLE callHandle, uint32_t u32Clien
             }
             else if (   paParms[0].type != VBOX_HGCM_SVC_PARM_PTR   /* the handle of device. */
                      || paParms[1].type != VBOX_HGCM_SVC_PARM_PTR   /*. */  
-					 || paParms[2].type != VBOX_HGCM_SVC_PARM_32BIT   /* return result BOOL */
+					 || paParms[2].type != VBOX_HGCM_SVC_PARM_64BIT   /* return result HANDLE as uint64 */
                     )
             {
                 rc = VERR_INVALID_PARAMETER;
@@ -434,7 +467,10 @@ void OutEnvFSService::guestCall(VBOXHGCMCALLHANDLE callHandle, uint32_t u32Clien
 				HANDLE  Out			= FindFirstFile(lpFileName,lpFindFileData);
                 LogRel(("OutEnvFS:: FindFirstFile %s Ret %p\n",lpFileName,Out));
 				paParms[2].u.uint64 = (uint64_t)Out;
-                rc = VINF_SUCCESS;
+                if(Out != INVALID_HANDLE_VALUE)
+                    rc = VINF_SUCCESS;
+                else
+                    rc = VERR_GENERAL_FAILURE;
             }
             break;
 		}

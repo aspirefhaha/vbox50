@@ -55,6 +55,7 @@ typedef struct _st_FhahaLib_Func{
 	BOOL (*PathFileExists)(LPCTSTR pszPath);	
 	UINT (*GetDiskType)(LPCTSTR lpRootPathName);
 	//HRESULT (*SHGetFolderPath)(HWND hwndOwner,int nFolder,long long hToken,DWORD dwFlags,LPTSTR pszPath);
+	BOOL (*GetFileAttributesEx)(LPCSTR  lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId, LPVOID  lpFileInformation);
 }FhahaLib_Func;
 /** @}  */
 
