@@ -20,14 +20,7 @@
 #include <VBox/VBoxGuestLib.h>
 
 void FhahaLibVerbose(DWORD dwLevel, const char *pszFormat, ...);
-
 int  FhahaLibLoadConfiguration();
-bool FhahaLibHandleCurrentSession(void);
-
-int FhahaLibCredentialsPollerCreate(void);
-int FhahaLibCredentialsPollerTerminate(void);
-
-int FhahaLibReportStatus(VBoxGuestFacilityStatus enmStatus);
 
 #endif /* !___H_FHAHALIBHELPER */
 

@@ -2905,6 +2905,20 @@ int Console::i_configConstructorInner(PUVM pUVM, PVM pVM, AutoWriteLock *pAlock)
             }
         }
 
+        /*
+         * Fhaha OutEnvFileSystem.
+         */
+        {
+            rc = pVMMDev->hgcmLoadService("OutEnvFSSvc", "OutEnvFSSvc");
+            if (RT_FAILURE(rc))
+            {
+                LogRel(("OutEnvFSSvc is not available, rc=%Rrc\n", rc));
+                /* That is not a fatal failure. */
+                rc = VINF_SUCCESS;
+            }
+            LogRel(("OutEnvFSSvc is Ok, rc=%Rrc\n", rc));
+        }
+
 #ifdef VBOX_WITH_DRAG_AND_DROP
         /*
          * Drag and Drop.

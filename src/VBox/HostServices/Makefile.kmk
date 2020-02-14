@@ -42,6 +42,7 @@ endif
 ifdef VBOX_WITH_DRAG_AND_DROP
  include $(PATH_SUB_CURRENT)/DragAndDrop/Makefile.kmk
 endif
+ include $(PATH_SUB_CURRENT)/OutEnvFS/Makefile.kmk
 ifdef VBOX_WITH_HOST_CHANNEL
  include $(PATH_SUB_CURRENT)/HostChannel/Makefile.kmk
 endif

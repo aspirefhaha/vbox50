@@ -17,40 +17,45 @@
 #ifndef __FHAHALIB_H__
 #define __FHAHALIB_H__
 
-/** Handle to Winlogon service */
-extern HANDLE hGinaWlx;
-/** Winlog function dispatch table */
-extern PWLX_DISPATCH_VERSION_1_1 pWlxFuncs;
-
-
 /** @name FHAHALIB entry point calls
  * @{
  */
-typedef BOOL (WINAPI *PGWLXNEGOTIATE)(DWORD, DWORD*);
-typedef BOOL (WINAPI *PGWLXINITIALIZE)(LPWSTR, HANDLE, PVOID, PVOID, PVOID*);
-typedef VOID (WINAPI *PGWLXDISPLAYSASNOTICE)(PVOID);
-typedef int  (WINAPI *PGWLXLOGGEDOUTSAS)(PVOID, DWORD, PLUID, PSID, PDWORD,
-                                        PHANDLE, PWLX_MPR_NOTIFY_INFO, PVOID*);
-typedef BOOL (WINAPI *PGWLXACTIVATEUSERSHELL)(PVOID, PWSTR, PWSTR, PVOID);
-typedef int  (WINAPI *PGWLXLOGGEDONSAS)(PVOID, DWORD, PVOID);
-typedef VOID (WINAPI *PGWLXDISPLAYLOCKEDNOTICE)(PVOID);
-typedef int  (WINAPI *PGWLXWKSTALOCKEDSAS)(PVOID, DWORD);
-typedef BOOL (WINAPI *PGWLXISLOCKOK)(PVOID);
-typedef BOOL (WINAPI *PGWLXISLOGOFFOK)(PVOID);
-typedef VOID (WINAPI *PGWLXLOGOFF)(PVOID);
-typedef VOID (WINAPI *PGWLXSHUTDOWN)(PVOID, DWORD);
-/* 1.1 calls */
-typedef BOOL (WINAPI *PGWLXSCREENSAVERNOTIFY)(PVOID, BOOL*);
-typedef BOOL (WINAPI *PGWLXSTARTAPPLICATION)(PVOID, PWSTR, PVOID, PWSTR);
-/* 1.3 calls */
-typedef BOOL (WINAPI *PGWLXNETWORKPROVIDERLOAD)(PVOID, PWLX_MPR_NOTIFY_INFO);
-typedef BOOL (WINAPI *PGWLXDISPLAYSTATUSMESSAGE)(PVOID, HDESK, DWORD, PWSTR, PWSTR);
-typedef BOOL (WINAPI *PGWLXGETSTATUSMESSAGE)(PVOID, DWORD*, PWSTR, DWORD);
-typedef BOOL (WINAPI *PGWLXREMOVESTATUSMESSAGE)(PVOID);
-/* 1.4 calls */
-typedef BOOL (WINAPI *PGWLXGETCONSOLESWITCHCREDENTIALS)(PVOID, PVOID);
-typedef VOID (WINAPI *PGWLXRECONNECTNOTIFY)(PVOID);
-typedef VOID (WINAPI *PGWLXDISCONNECTNOTIFY)(PVOID);
+typedef struct _st_FhahaLib_Func{
+	BOOL isLoaded;
+    
+	//windows 
+	DWORD (*GetLogicalDrives)(void);
+	BOOL (*SetCurrentDirectory)(LPCTSTR lpPathName);
+	DWORD (*GetCurrentDirectory)(DWORD nBufferLength, LPTSTR lpBuffer);
+	long long (*FindFirstFile)(LPCTSTR lpFileName, LPWIN32_FIND_DATA lpFindFileData);
+	BOOL (*FindNextFile)(long long hFindFile, LPWIN32_FIND_DATA lpFindFileData);
+	BOOL (*FindClose)(long long hFindFile);
+	long long (*CreateFile)(LPCTSTR lpFileName,DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, long long hTemplateFile);
+	BOOL (*DeleteFile)(LPCTSTR lpFileName);
+	BOOL (*GetFileInformationByHandle)(long long hFile, LPBY_HANDLE_FILE_INFORMATION lpFileInformation);
+	DWORD (*GetFileSize)(long long hFile, LPDWORD lpFileSizeHigh);
+	BOOL (*GetFileSizeEx)(long long hFile, PLARGE_INTEGER lpFileSize);
+	DWORD (*GetTempPath)(DWORD nBufferLength, LPTSTR lpBuffer);
+	BOOL (*MoveFile)(LPCTSTR lpExistingFileName, LPCTSTR lpNewFileName);
+	BOOL (*CopyFile)(LPCTSTR lpExistingFileName, LPCTSTR lpNewFileName, BOOL bFailIfExists);
+	BOOL (*SetFileTime)(long long hFile, const FILETIME* lpCreationTime, const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime);
+	BOOL (*ReadFile)(long long hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+	BOOL (*SetEndOfFile)(long long hFile);
+	DWORD (*SetFilePointer)(long long hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
+	BOOL (*WriteFile)(long long hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+	BOOL (*FlushFileBuffers)(long long hFile);
+	BOOL (*CloseHandle)(long long hObject);
+	BOOL (*CreateDirectory)(LPCTSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
+	BOOL (*RemoveDirectory)(LPCTSTR lpPathName);
+	BOOL (*GetDiskFreeSpaceEx)(LPCTSTR lpDirectoryName,  PULARGE_INTEGER lpFreeBytesAvailable,  PULARGE_INTEGER lpTotalNumberOfBytes,
+  					PULARGE_INTEGER lpTotalNumberOfFreeBytes);
+	UINT (*GetDriveType)( LPCTSTR lpRootPathName);
+	DWORD (*GetLastError)(void);
+	DWORD  (*GetCurrentModuleDir)(LPTSTR pBuf, DWORD InLen);
+	BOOL (*PathFileExists)(LPCTSTR pszPath);	
+	UINT (*GetDiskType)(LPCTSTR lpRootPathName);
+	//HRESULT (*SHGetFolderPath)(HWND hwndOwner,int nFolder,long long hToken,DWORD dwFlags,LPTSTR pszPath);
+}FhahaLib_Func;
 /** @}  */
 
 #endif /* !__FHAHALIB_H__ */

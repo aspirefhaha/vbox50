@@ -17,31 +17,6 @@
 LIBRARY FhahaLib
 
 EXPORTS
-        WlxNegotiate
-        WlxInitialize
-        WlxDisplaySASNotice
-        WlxLoggedOutSAS
-        WlxActivateUserShell
-        WlxLoggedOnSAS
-        WlxDisplayLockedNotice
-        WlxWkstaLockedSAS
-        WlxIsLockOk
-        WlxIsLogoffOk
-        WlxLogoff
-        WlxShutdown
-        ; 1.1
-        WlxScreenSaverNotify
-        WlxStartApplication
-        ; 1.3
-        WlxNetworkProviderLoad
-        WlxDisplayStatusMessage
-        WlxGetStatusMessage
-        WlxRemoveStatusMessage
-        ; 1.4
-        WlxGetConsoleSwitchCredentials
-        WlxReconnectNotify
-        WlxDisconnectNotify
     ; Debug
     FhahaLibDebug
-    ; Windows Notification Package callbacks
-    WnpScreenSaverStop
+    FhahaLibGetProcStruct

@@ -20,11 +20,11 @@ include $(KBUILD_PATH)/subheader.kmk
 
 DLLS += FhahaLib
 FhahaLib_TEMPLATE = VBOXGUESTR3DLL
-FhahaLib_DEFS     = UNICODE VBGL_VBOXGUEST VBOX_WITH_HGCM
+FhahaLib_DEFS     = VBGL_VBOXGUEST VBOX_WITH_HGCM
+FhahaLib_INCS     = ../../common
 FhahaLib_SOURCES  = \
 	FhahaLib.cpp \
 	Helper.cpp  \
-	Dialog.cpp \
 	FhahaLib.def \
 	FhahaLib.rc
 FhahaLib_LIBS     = \
