@@ -58,7 +58,12 @@ private:
     // wrapped IUserInfo properties
     HRESULT getUserpwd(com::Utf8Str & userpwd);
     HRESULT getAdminpwd(com::Utf8Str & adminpwd);
+    HRESULT setUserpwd(const com::Utf8Str & userpwd);
+    HRESULT setAdminpwd(const com::Utf8Str & adminpwd);
     HRESULT getCurrentuser(com::Utf8Str & currentuser);
+    HRESULT getLastuser(com::Utf8Str & lastuser);
+    //HRESULT setLastuser(const com::Utf8Str & lastuser);
+    HRESULT setCurrentuser(const com::Utf8Str & currentuser);
     HRESULT getParent(ComPtr<IVirtualBox> &aParent);
 
     // wrapped IUserInfo methods

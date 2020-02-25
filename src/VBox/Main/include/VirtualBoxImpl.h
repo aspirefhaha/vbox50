@@ -252,8 +252,8 @@ private:
 
     // wrapped IVirtualBox properties
     HRESULT login(const com::Utf8Str & aName);
-	HRESULT getCuruser(com :: Utf8Str & aCuruser);
-	HRESULT chgpwd(const com :: Utf8Str & aOldPwd, const com :: Utf8Str & aNewPwd);
+	//HRESULT getCuruser(com :: Utf8Str & aCuruser);
+	//HRESULT chgpwd(const com :: Utf8Str & aOldPwd, const com :: Utf8Str & aNewPwd);
     HRESULT getVersion(com::Utf8Str &aVersion);
     HRESULT getVersionNormalized(com::Utf8Str &aVersionNormalized);
     HRESULT getRevision(ULONG *aRevision);
@@ -280,8 +280,8 @@ private:
     HRESULT getExtensionPackManager(ComPtr<IExtPackManager> &aExtensionPackManager);
     HRESULT getInternalNetworks(std::vector<com::Utf8Str> &aInternalNetworks);
     HRESULT getGenericNetworkDrivers(std::vector<com::Utf8Str> &aGenericNetworkDrivers);
-	HRESULT getUserpwd(com::Utf8Str & userpwd);
-	HRESULT getAdminpwd(com::Utf8Str & adminpwd);
+	//HRESULT getUserpwd(com::Utf8Str & userpwd);
+	//HRESULT getAdminpwd(com::Utf8Str & adminpwd);
 
    // wrapped IVirtualBox methods
     HRESULT composeMachineFilename(const com::Utf8Str &aName,

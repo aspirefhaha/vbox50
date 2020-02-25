@@ -41,6 +41,7 @@
 #include "CUserInfo.h"
 #include "CVirtualBoxClient.h"
 #include "CVirtualBox.h"
+#include "CUserInfo.h"
 #include "CSession.h"
 #include "CGuestOSType.h"
 
@@ -50,6 +51,7 @@ class QLabel;
 class QToolButton;
 class UIMachine;
 class CMachine;
+class CUserInfo;
 class CMedium;
 class CUSBDevice;
 class CHostVideoInputDevice;

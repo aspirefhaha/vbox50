@@ -493,16 +493,18 @@ extern "C" DECLEXPORT(int) TrustedMain(int argc, char **argv, char ** /*envp*/)
                     msgCenter().showBetaBuildWarning();
 # endif /* !DEBUG */
 #endif /* !VBOX_BLEEDING_EDGE*/
-				//int loginres = 0;
+
 				CVirtualBox vbox = vboxGlobal().virtualBox();
-				QString curser = vbox.GetCuruser();
-				int loginres = 1;
+                CUserInfo userinfo = vbox.GetUserInfo();
+				QString curser = userinfo.GetCurrentuser();
+				int loginres = 0;
+                //if(userinfo.Get)
 				if(curser.isEmpty()){
-					UISafePointerWizard pWizard = new UIWizardLogin();
-			        pWizard->prepare();
-				 	loginres = pWizard->exec();
-					if (pWizard)
-		            delete pWizard;
+					UISafePointerWizard pLogin = new UIWizardLogin();
+			        pLogin->prepare();
+				 	loginres = pLogin->exec();
+					if (pLogin)
+		                delete pLogin;
 				}
 		        //AssertMsg((loginres==1),("Login falied %d",loginres));
 		        

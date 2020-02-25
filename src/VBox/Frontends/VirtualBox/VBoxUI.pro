@@ -35,6 +35,7 @@ FORMS = \
     src/settings/global/UIGlobalSettingsNetworkDetailsHost.ui \
     src/settings/global/UIGlobalSettingsExtension.ui \
     src/settings/global/UIGlobalSettingsProxy.ui \
+	src/settings/global/UIGlobalSettingsChgPwd.ui \
     src/settings/machine/UIMachineSettingsGeneral.ui \
     src/settings/machine/UIMachineSettingsSystem.ui \
     src/settings/machine/UIMachineSettingsDisplay.ui \

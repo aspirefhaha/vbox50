@@ -82,6 +82,7 @@ private slots:
 
     /* Handlers: Machine-menu slots: */
     void sltShowAddMachineDialog(const QString &strFileName = QString());
+    void sltChangeUserPwd();
     void sltShowMachineSettingsDialog(const QString &strCategory = QString(),
                                       const QString &strControl = QString(),
                                       const QString &strId = QString());

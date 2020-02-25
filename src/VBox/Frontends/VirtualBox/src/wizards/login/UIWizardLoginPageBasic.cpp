@@ -133,27 +133,30 @@ bool UIWizardLoginPageBasic::validatePage()
 	
     startProcessing();
 	CVirtualBox vbox = vboxGlobal().virtualBox();
-	QString curser = vbox.GetCuruser();
+    CUserInfo userInfo = vbox.GetUserInfo();
+	QString curser = userInfo.GetCuruser();
+	QString lastuser = userInfo.GetLastuser();
 	
-	
-	//CUserInfo userinfo = vboxGlobal().userInfo();
 	//QString userpwd = userinfo.GetUserpwd();
 	//QString adminpwd = userinfo.GetAdminpwd();
-	QString userpwd = vbox.GetUserpwd();
-	QString	adminpwd = vbox.GetAdminpwd();
+    QString curser = userinfo.GetCurrentuser();
+	//QString userpwd = vbox.GetUserpwd();
+	//QString	adminpwd = vbox.GetAdminpwd();
 	QString inputpwd = field("pwd").toString();
 	if(curser.isEmpty()){
 		if(m_pRole->checkedId() == 0){
-			if(inputpwd == adminpwd){
-				vbox.Login("admin");
+			//if(inputpwd == adminpwd){
+            if(userInfo.Login("admin",inputpwd)=="admin"){
+				//vbox.Login("admin");
 				fResult = true;
 			}
 			else
 				m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed as Admin</font>"));
 		}
 		else if(m_pRole->checkedId() == 1){
-			if(inputpwd == userpwd){
-				vbox.Login("user");
+			//if(inputpwd == userpwd){
+            if(userInfo.Login("user",inputpwd)=="user"){
+				//vbox.Login("user");
 				fResult = true;
 			}
 			else 

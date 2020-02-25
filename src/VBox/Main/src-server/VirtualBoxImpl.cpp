@@ -234,9 +234,9 @@ struct VirtualBox::Data
     // const objects not requiring locking
     const ComObjPtr<Host>               pHost;
 	const ComObjPtr<UserInfo>			pUserInfo;
-	const Utf8Str						strAdminPwd;
-	const Utf8Str						strUserPwd;
-	const Utf8Str						strCuruser;
+	//const Utf8Str						strAdminPwd;
+	//const Utf8Str						strUserPwd;
+	//const Utf8Str						strCuruser;
     const ComObjPtr<SystemProperties>   pSystemProperties;
 #ifdef VBOX_WITH_RESOURCE_USAGE_API
     const ComObjPtr<PerformanceCollector> pPerformanceCollector;
@@ -441,8 +441,8 @@ HRESULT VirtualBox::init()
 		rc = m->pUserInfo->i_loadSettings(m->pMainConfigFile->userInfo);
 		if(FAILED(rc)) throw rc;
 
-		unconst(m->strAdminPwd) = m->pMainConfigFile->userInfo.adminPwd;
-		unconst(m->strUserPwd) = m->pMainConfigFile->userInfo.userPwd;
+		//unconst(m->strAdminPwd) = m->pMainConfigFile->userInfo.adminPwd;
+		//unconst(m->strUserPwd) = m->pMainConfigFile->userInfo.userPwd;
 
         /*
          * Create autostart database object early, because the system properties
@@ -868,6 +868,7 @@ void VirtualBox::uninit()
 
 // Wrapped IVirtualBox properties
 /////////////////////////////////////////////////////////////////////////////
+/*
 HRESULT VirtualBox::getAdminpwd(com::Utf8Str & aAdminPwd)
 {
 	aAdminPwd = m->strAdminPwd;
@@ -884,7 +885,7 @@ HRESULT VirtualBox::getCuruser(com::Utf8Str & aCurUser)
 {
 	aCurUser = m->strCuruser;
 	return S_OK;
-}
+}*/
 
 HRESULT VirtualBox::getVersion(com::Utf8Str &aVersion)
 {
@@ -1336,7 +1337,7 @@ HRESULT VirtualBox::checkFirmwarePresent(FirmwareType_T aFirmwareType,
 }
 // Wrapped IVirtualBox methods
 /////////////////////////////////////////////////////////////////////////////
-
+/*
 HRESULT VirtualBox::login(const com::Utf8Str & aName)
 {
 	unconst(m->strCuruser) = aName;
@@ -1355,7 +1356,7 @@ HRESULT VirtualBox::chgpwd(	const com::Utf8Str & aOldPwd,
 		return S_OK;
 	}
 	return E_INVALIDARG;
-}
+}*/
 
 
 /* Helper for VirtualBox::ComposeMachineFilename */

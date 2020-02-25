@@ -1960,7 +1960,7 @@
     <attribute name="userInfo" type="IUserInfo" readonly="yes">
       <desc>Associated userinfo object.</desc>
     </attribute>
-    <attribute name="userpwd" type="wstring" readonly="yes">
+    <!--attribute name="userpwd" type="wstring" readonly="yes">
       <desc>
        Normal User Password
       </desc>
@@ -1974,7 +1974,7 @@
       <desc>
         Current Logined User Name ,only user and admin 
       </desc>
-    </attribute>
+    </attribute-->
     <attribute name="systemProperties" type="ISystemProperties" readonly="yes">
       <desc>Associated system information object.</desc>
     </attribute>
@@ -2076,7 +2076,7 @@
       </desc>
     </attribute>
 
-    <method name="login">
+    <!--method name="login">
       <desc>
         login to VBox as user or admin
       </desc>
@@ -2092,7 +2092,7 @@
       <param name="newpwd" type="wstring" dir="in">
       </param>
 
-    </method>
+    </method-->
 
     <method name="composeMachineFilename">
       <desc>
@@ -8612,9 +8612,10 @@ and "VAR" for unsetting. -->
             <link to="IVirtualBox::userInfo" />
       </desc>
     </attribute>
-    <attribute name="userpwd" type="wstring" readonly="yes" />
-    <attribute name="adminpwd" type="wstring" readonly="yes" />
-    <attribute name="currentuser" type="wstring" readonly="yes" />
+    <attribute name="userpwd" type="wstring" />
+    <attribute name="adminpwd" type="wstring" />
+    <attribute name="currentuser" type="wstring" />
+    <attribute name="lastuser" type="wstring" readonly="yes"/>
     <method name="login">
       <param name="username" type="wstring" dir="in" />
       <param name="pwd" type="wstring" dir="in" />

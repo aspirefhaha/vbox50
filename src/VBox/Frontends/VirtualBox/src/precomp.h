@@ -490,6 +490,7 @@
 #include "UIGlobalSettingsGeneral.h"
 #include "UIGlobalSettingsInput.h"
 #include "UIGlobalSettingsLanguage.h"
+#include "UIGlobalSettingsChgPwd.h"
 #include "UIGlobalSettingsNetwork.h"
 #include "UIGlobalSettingsNetworkDetailsHost.h"
 #include "UIGlobalSettingsNetworkDetailsNAT.h"

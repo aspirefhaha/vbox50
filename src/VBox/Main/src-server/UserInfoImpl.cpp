@@ -145,6 +145,7 @@ struct UserInfo::Data
 	Utf8Str currentuser;
 	Utf8Str adminpwd;
 	Utf8Str userpwd;
+    Utf8Str lastuser;
     
 };
 
@@ -218,11 +219,15 @@ void UserInfo::uninit()
 
 HRESULT UserInfo::i_loadSettings(const settings::UserInfo &data)
 {
+    m->userpwd = data.userPwd;
+    m->adminpwd = data.adminPwd;
 	return S_OK;
 }	
 
 HRESULT UserInfo::i_saveSettings(settings::UserInfo &data)
 {
+    data.userPwd = m->userpwd;
+    data.adminPwd = m->adminpwd;
 	return S_OK;
 }
 
@@ -235,7 +240,7 @@ HRESULT UserInfo::i_saveSettings(settings::UserInfo &data)
  */
 HRESULT UserInfo::getUserpwd(com::Utf8Str &aUserpwd)
 {
-    
+    aUserpwd = m->userpwd;
     return S_OK;
 }
 
@@ -247,7 +252,7 @@ HRESULT UserInfo::getUserpwd(com::Utf8Str &aUserpwd)
  */
 HRESULT UserInfo::getAdminpwd(com::Utf8Str &aUserpwd)
 {
-    
+    aUserpwd = m->adminpwd;
     return S_OK;
 }
 
@@ -259,10 +264,39 @@ HRESULT UserInfo::getAdminpwd(com::Utf8Str &aUserpwd)
  */
 HRESULT UserInfo::getCurrentuser(com::Utf8Str &aUserName)
 {
-    
+    aUserName = m->currentuser;
     return S_OK;
 }
 
+HRESULT UserInfo::setCurrentuser(const com::Utf8Str & currentuser)
+{
+    m->currentuser = currentuser;
+    return S_OK;
+}
+
+HRESULT UserInfo::setUserpwd(const com::Utf8Str & userpwd)
+{
+    m->userpwd = userpwd;
+    return S_OK;
+}
+HRESULT UserInfo:: setAdminpwd(const com::Utf8Str & adminpwd)
+{
+    m->adminpwd = adminpwd;
+    return S_OK;
+}
+
+HRESULT UserInfo::getLastuser(com::Utf8Str &userName)
+{
+    userName = m->lastuser;
+    return S_OK;
+}
+#if 0
+HRESULT UserInfo::setLastuser(const com::Utf8Str & userName)
+{
+    //TODO
+    return S_OK;
+}
+#endif
 HRESULT UserInfo::getParent(ComPtr<IVirtualBox> &aParent)
 {
 	/* mParent is constant during life time, no need to lock */
@@ -275,6 +309,27 @@ HRESULT UserInfo::getParent(ComPtr<IVirtualBox> &aParent)
 
 HRESULT UserInfo::login(const com::Utf8Str &username, const com::Utf8Str &pwd, com::Utf8Str &user)
 {
+    if(username == "admin"){
+        if(m->adminpwd == pwd){
+            user = "admin";
+            m->lastuser = "admin";
+            m->currentuser = "admin";
+        }
+        else{
+            user = "";
+        }
+
+    }
+    else{
+        if(m->userpwd == pwd){
+            user="user";
+            m->lastuser = "user";
+            m->currentuser = "user";
+        }
+        else{
+            user = "";
+        }
+    }
 	return S_OK;
 }
 
