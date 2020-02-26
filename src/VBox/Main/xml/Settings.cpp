@@ -532,11 +532,17 @@ void ConfigFileBase::readUserInfo(const xml::ElementNode & elmUserInfo,
 {
 	if(elmUserInfo.nameEquals("UserInfo")){
 		//<UserInfo userpwd="1234" adminpwd="1234" />
-		Utf8Str adminpwd,userpwd;
+		Utf8Str adminpwd,userpwd,userleftcount,lastuser,adminleftcount;
 		if(elmUserInfo.getAttributeValue("userpwd",userpwd) &&
-		elmUserInfo.getAttributeValue("adminpwd",adminpwd)){
+		elmUserInfo.getAttributeValue("adminpwd",adminpwd)&&
+        elmUserInfo.getAttributeValue("lastuser",lastuser) &&
+        elmUserInfo.getAttributeValue("adminleftcount",adminleftcount) &&
+        elmUserInfo.getAttributeValue("userleftcount",userleftcount)){
 			userinfo.adminPwd = adminpwd;
 			userinfo.userPwd = userpwd;
+            userinfo.lastUser = lastuser;
+            userinfo.adminLeftCount = adminleftcount;
+            userinfo.userLeftCount = userleftcount;
 		}
 		else
 			throw ConfigFileError(this, NULL, N_("Required userinfo userpwd or adminpwd attribute is missing %s"),"nothing");
@@ -1095,6 +1101,9 @@ void ConfigFileBase::buildUserInfo(xml::ElementNode &elmParent, const UserInfo &
 	xml::ElementNode *pelmUserInfo = elmParent.createChild("UserInfo");
 	pelmUserInfo->setAttribute("adminpwd",userinfo.adminPwd);
 	pelmUserInfo->setAttribute("userpwd",userinfo.userPwd);
+    pelmUserInfo->setAttribute("userleftcount",userinfo.userLeftCount);
+    pelmUserInfo->setAttribute("adminleftcount",userinfo.adminLeftCount);
+    pelmUserInfo->setAttribute("lastuser",userinfo.lastUser);
 }
 
 /**

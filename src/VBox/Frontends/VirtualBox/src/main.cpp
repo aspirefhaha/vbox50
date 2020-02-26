@@ -506,6 +506,9 @@ extern "C" DECLEXPORT(int) TrustedMain(int argc, char **argv, char ** /*envp*/)
 					if (pLogin)
 		                delete pLogin;
 				}
+                else{
+                    loginres = 1;
+                }
 		        //AssertMsg((loginres==1),("Login falied %d",loginres));
 		        
 				if(loginres!=0){

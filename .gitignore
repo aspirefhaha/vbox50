@@ -1,0 +1,7 @@
+out
+*.log
+.el
+.scm-settings
+env.bat
+*.cer
+.vscode

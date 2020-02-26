@@ -985,6 +985,7 @@ void UIActionPool::preparePool()
 {
 	m_pool[UIActionIndexST_M_User] = new UIActionMenuUser(this);
 	m_pool[UIActionIndexST_M_User_ChgPWd] = new UIActionSimpleUserChgPwd(this);
+    m_pool[UIActionIndexST_M_SafeEnv_Setting] = new UIActionSimpleSafeEnvSetting(this);
     /* Create 'Application' actions: */
     m_pool[UIActionIndex_M_Application] = new UIActionMenuApplication(this);
 #ifdef RT_OS_DARWIN

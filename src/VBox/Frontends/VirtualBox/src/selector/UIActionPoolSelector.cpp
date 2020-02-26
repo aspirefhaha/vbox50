@@ -1089,6 +1089,7 @@ void UIActionPoolSelector::preparePool()
 
 	m_pool[UIActionIndexST_M_User] = new UIActionMenuUser(this);
 	m_pool[UIActionIndexST_M_User_ChgPWd] = new UIActionSimpleUserChgPwd(this);
+    m_pool[UIActionIndexST_M_SafeEnv_Setting] = new UIActionSimpleSafeEnvSetting(this);
 
     /* Call to base-class: */
     UIActionPool::preparePool();

@@ -373,6 +373,7 @@ void OutEnvFSService::guestCall(VBOXHGCMCALLHANDLE callHandle, uint32_t u32Clien
 				LPCTSTR lpPathName			= (LPCTSTR)paParms[0].u.pointer.addr;
 				BOOL  Out			= SetCurrentDirectoryA(lpPathName);
 #ifdef DEBUG 
+                char tmpstr[256]={0};
                 sprintf(tmpstr,"svcCall: GDLSIM_FN_SETCURRENTDIRECTORY lpPathName is %s,result is %d\n",lpPathName,Out);
                 OutputDebugStringA(tmpstr);
 #endif

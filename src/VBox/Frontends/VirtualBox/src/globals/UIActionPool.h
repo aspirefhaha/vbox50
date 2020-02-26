@@ -530,6 +530,33 @@ protected:
     QMap<UIActionRestrictionLevel, UIExtraDataMetaDefs::MenuHelpActionType> m_restrictedActionsMenuHelp;
 };
 
+class UIActionSimpleSafeEnvSetting:public UIActionSimple
+{
+    Q_OBJECT;
+public :
+	UIActionSimpleSafeEnvSetting(UIActionPool * pParent)
+		: UIActionSimple(pParent, ":/safeenv_setting_32px.png",":/safeenv_setting_16px.png"){}
+
+protected:
+	QString shortcutExtraDataID() const
+    {
+        return QString("SafeSetting");
+    }
+
+    QKeySequence defaultShortcut(UIActionPoolType) const
+    {
+        return QKeySequence("Ctrl+E");
+    }
+
+    void retranslateUi()
+    {
+        setName(QApplication::translate("UIActionPool", "&SafeEnv..."));
+        setStatusTip(QApplication::translate("UIActionPool", "Safe Env Setting"));
+        setToolTip(text().remove('&').remove('.') +
+                   (shortcut().toString().isEmpty() ? "" : QString(" (%1)").arg(shortcut().toString())));
+    }
+};
+
 class UIActionSimpleUserChgPwd: public UIActionSimple
 {
 	Q_OBJECT;

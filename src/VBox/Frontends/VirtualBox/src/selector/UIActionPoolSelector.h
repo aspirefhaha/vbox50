@@ -91,6 +91,7 @@ enum UIActionIndexST
     /* 'User Config' menu actions: */
 	UIActionIndexST_M_User,
     UIActionIndexST_M_User_ChgPWd,
+    UIActionIndexST_M_SafeEnv_Setting,
 
     /* Maximum index: */
     UIActionIndexST_Max

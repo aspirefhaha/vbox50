@@ -55,6 +55,7 @@
 # include "UIDesktopServices.h"
 # include "UIGlobalSettingsExtension.h"
 # include "UIGlobalSettingsChgPwd.h"
+# include "UIGlobalSettingsSafeEnv.h"
 # include "UIActionPoolSelector.h"
 # include "UIGChooser.h"
 # include "UIGDetails.h"
@@ -342,6 +343,12 @@ void UISelectorWindow::sltShowPreferencesDialog()
 void UISelectorWindow::sltPerformExit()
 {
     close();
+}
+
+void UISelectorWindow::sltSafeEnvSetting()
+{
+    UIGlobalSettingsSafeEnv * pSafeEnvSet = new UIGlobalSettingsSafeEnv();
+    pSafeEnvSet->exec();
 }
 
 void UISelectorWindow::sltChangeUserPwd()
@@ -1334,7 +1341,9 @@ void UISelectorWindow::prepareMenuUser(QMenu * pMenu)
 	if(!pMenu->isEmpty())
 		return;
 	pMenu->addAction(actionPool()->action(UIActionIndexST_M_User_ChgPWd));
+    pMenu->addAction(actionPool()->action(UIActionIndexST_M_SafeEnv_Setting));
 	m_userActions << actionPool()->action(UIActionIndexST_M_User_ChgPWd);
+    m_userActions << actionPool()->action(UIActionIndexST_M_SafeEnv_Setting);
 }
 
 void UISelectorWindow::prepareMenuMachine(QMenu *pMenu)
@@ -1503,6 +1512,7 @@ void UISelectorWindow::prepareWidgets()
 	// }
     
 	mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_User_ChgPWd));
+    mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_SafeEnv_Setting));
 
     /* Prepare graphics VM list: */
     m_pChooser = new UIGChooser(this);
@@ -1581,6 +1591,7 @@ void UISelectorWindow::prepareConnections()
 
     /* 'ChgPwd' menu connections: */
     connect(actionPool()->action(UIActionIndexST_M_User_ChgPWd),SIGNAL(triggered()),this,SLOT(sltChangeUserPwd()));
+    connect(actionPool()->action(UIActionIndexST_M_SafeEnv_Setting),SIGNAL(triggered()),this,SLOT(sltSafeEnvSetting()));
 
     /* 'Machine' menu connections: */
     connect(actionPool()->action(UIActionIndexST_M_Machine_S_Add), SIGNAL(triggered()), this, SLOT(sltShowAddMachineDialog()));

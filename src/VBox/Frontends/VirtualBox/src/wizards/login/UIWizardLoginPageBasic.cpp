@@ -15,6 +15,7 @@
 # include <QVBoxLayout>
 # include <QHBoxLayout>
 # include <QFormLayout>
+# include <QDateTime>
 
 /* GUI includes: */
 # include "UIWizardLoginPageBasic.h"
@@ -22,6 +23,7 @@
 # include "UIIconPool.h"
 # include "VBoxGlobal.h"
 # include "UIMessageCenter.h"
+# include "UIGlobalSettingsChgPwd.h"
 
 # include "QIToolButton.h"
 # include "QIRichTextLabel.h"
@@ -88,6 +90,9 @@ UIWizardLoginPageBasic::UIWizardLoginPageBasic()
         }
         pMainLayout->addWidget(m_pLabel);
         pMainLayout->addLayout(pUserPwdLayout);
+        m_pbChgPwd = new QPushButton(UIWizardLogin::tr("Change Pwd"),this);
+        connect(m_pbChgPwd,SIGNAL(clicked()),this,SLOT(sltChgPwd()));
+        pMainLayout->addWidget(m_pbChgPwd);
 		pMainLayout->addWidget(m_pTip);
         pMainLayout->addStretch();
     }
@@ -117,6 +122,16 @@ void UIWizardLoginPageBasic::initializePage()
 {
     /* Translate page: */
     retranslateUi();
+    
+    CVirtualBox vbox = vboxGlobal().virtualBox();
+    CUserInfo userinfo = vbox.GetUserInfo();
+    QString lastuser = userinfo.GetLastuser();
+    if(lastuser=="admin"){
+        m_pAdmin->setChecked(true);
+    }
+    else{
+        m_pUser->setChecked(true);
+    }
 }
 
 bool UIWizardLoginPageBasic::isComplete() const
@@ -124,6 +139,13 @@ bool UIWizardLoginPageBasic::isComplete() const
     /* Make sure valid medium chosen: */
     //return !vboxGlobal().medium(id()).isNull();
     return true;
+}
+
+void UIWizardLoginPageBasic::sltChgPwd()
+{
+    UIGlobalSettingsChgPwd * pChgPwdDlg = new UIGlobalSettingsChgPwd();
+    pChgPwdDlg->exec();
+
 }
 
 bool UIWizardLoginPageBasic::validatePage()
@@ -134,12 +156,11 @@ bool UIWizardLoginPageBasic::validatePage()
     startProcessing();
 	CVirtualBox vbox = vboxGlobal().virtualBox();
     CUserInfo userInfo = vbox.GetUserInfo();
-	QString curser = userInfo.GetCuruser();
+	QString curser = userInfo.GetCurrentuser();
 	QString lastuser = userInfo.GetLastuser();
 	
 	//QString userpwd = userinfo.GetUserpwd();
 	//QString adminpwd = userinfo.GetAdminpwd();
-    QString curser = userinfo.GetCurrentuser();
 	//QString userpwd = vbox.GetUserpwd();
 	//QString	adminpwd = vbox.GetAdminpwd();
 	QString inputpwd = field("pwd").toString();
@@ -150,8 +171,14 @@ bool UIWizardLoginPageBasic::validatePage()
 				//vbox.Login("admin");
 				fResult = true;
 			}
-			else
-				m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed as Admin</font>"));
+			else{
+                QDateTime current_date_time =QDateTime::currentDateTime();
+                QString current_date =current_date_time.toString("yyyy.MM.dd hh:mm:ss.zzz");
+                vbox.SetExtraData("safeenvlastsave",current_date);
+                //vbox.SaveSettings();
+				m_pTip->setText(QString(UIWizardLogin::tr("Login Failed as<font color=red> Admin</font>,Left <font color=red>%1</font> Chances!")).arg(userInfo.GetAdminleftcount()));
+                
+            }
 		}
 		else if(m_pRole->checkedId() == 1){
 			//if(inputpwd == userpwd){
@@ -159,13 +186,18 @@ bool UIWizardLoginPageBasic::validatePage()
 				//vbox.Login("user");
 				fResult = true;
 			}
-			else 
-				m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed as User</font>"));
+			else {
+                QDateTime current_date_time =QDateTime::currentDateTime();
+                QString current_date =current_date_time.toString("yyyy.MM.dd hh:mm:ss.zzz");
+                vbox.SetExtraData("safeenvlastsave",current_date);
+				m_pTip->setText(QString(UIWizardLogin::tr("Login Failed as <font color=red>User</font>,Left <font color=red>%1</font> Chances!")).arg(userInfo.GetUserleftcount()));
+            }
 		}
 		else 
 		{
 			m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed</font>"));
 		}
+        //vbox.saveSettings();
 	}
 	else{
 		fResult = true;

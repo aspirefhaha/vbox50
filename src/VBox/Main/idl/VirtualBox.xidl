@@ -8615,6 +8615,8 @@ and "VAR" for unsetting. -->
     <attribute name="userpwd" type="wstring" />
     <attribute name="adminpwd" type="wstring" />
     <attribute name="currentuser" type="wstring" />
+    <attribute name="adminleftcount" type="wstring" readonly="yes"/>
+    <attribute name="userleftcount" type="wstring" />
     <attribute name="lastuser" type="wstring" readonly="yes"/>
     <method name="login">
       <param name="username" type="wstring" dir="in" />

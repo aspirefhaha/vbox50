@@ -177,7 +177,9 @@ struct UserInfo
 {
 	com::Utf8Str	adminPwd;
 	com::Utf8Str 	userPwd;
-	com::Utf8Str 	currentuser;
+	com::Utf8Str 	lastUser;
+    com::Utf8Str    adminLeftCount;
+    com::Utf8Str    userLeftCount;
 };
 
 

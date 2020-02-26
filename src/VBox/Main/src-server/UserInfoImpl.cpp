@@ -146,6 +146,8 @@ struct UserInfo::Data
 	Utf8Str adminpwd;
 	Utf8Str userpwd;
     Utf8Str lastuser;
+    Utf8Str adminleftcount;
+    Utf8Str userleftcount;
     
 };
 
@@ -175,7 +177,7 @@ void UserInfo::FinalRelease()
  */
 HRESULT UserInfo::init(VirtualBox *aParent)
 {
-    HRESULT hrc;
+    //HRESULT hrc;
     LogFlowThisFunc(("aParent=%p\n", aParent));
 
     /* Enclose the state transition NotReady->InInit->Ready */
@@ -221,6 +223,9 @@ HRESULT UserInfo::i_loadSettings(const settings::UserInfo &data)
 {
     m->userpwd = data.userPwd;
     m->adminpwd = data.adminPwd;
+    m->adminleftcount = data.adminLeftCount;
+    m->lastuser = data.lastUser;
+    m->userleftcount = data.userLeftCount;
 	return S_OK;
 }	
 
@@ -228,6 +233,9 @@ HRESULT UserInfo::i_saveSettings(settings::UserInfo &data)
 {
     data.userPwd = m->userpwd;
     data.adminPwd = m->adminpwd;
+    data.adminLeftCount = m->adminleftcount;
+    data.userLeftCount = m->userleftcount;
+    data.lastUser = m->lastuser;
 	return S_OK;
 }
 
@@ -307,29 +315,75 @@ HRESULT UserInfo::getParent(ComPtr<IVirtualBox> &aParent)
 
 }
 
-HRESULT UserInfo::login(const com::Utf8Str &username, const com::Utf8Str &pwd, com::Utf8Str &user)
+HRESULT UserInfo::getAdminleftcount(com::Utf8Str & adminleftcount)
+{
+    adminleftcount = m->adminleftcount;
+
+    return S_OK;
+
+}
+
+HRESULT UserInfo::getUserleftcount(com::Utf8Str & userleftcount)
+{
+    userleftcount = m->userleftcount;
+
+    return S_OK;
+
+}
+
+HRESULT UserInfo::setUserleftcount(const com::Utf8Str & userleftcount)
+{
+    m->userleftcount = userleftcount;
+
+    return S_OK;
+}
+
+HRESULT UserInfo::login(const com::Utf8Str &username, const com::Utf8Str &pwd, com::Utf8Str &retuser)
 {
     if(username == "admin"){
+        int adminleftcount = atoi(m->adminleftcount.c_str());
+        if(adminleftcount <= 0){
+            retuser = "";
+            return S_OK;
+        }
         if(m->adminpwd == pwd){
-            user = "admin";
+            retuser = "admin";
             m->lastuser = "admin";
             m->currentuser = "admin";
+			m->adminleftcount = "5";
+            //m->pParent->setExtraData("adminleftcount","5");
         }
         else{
-            user = "";
+            adminleftcount--;
+            m->adminleftcount = Utf8StrFmt("%d",adminleftcount);
+            
+            //m->pParent->setExtraData("adminleftcount",m->adminleftcount);
+            retuser = "";
         }
 
     }
     else{
+        int userleftcount = atoi(m->userleftcount.c_str());
+        if(userleftcount <= 0){
+            retuser = "";
+            return S_OK;
+        }
         if(m->userpwd == pwd){
-            user="user";
+            retuser="user";
             m->lastuser = "user";
             m->currentuser = "user";
+			m->userleftcount = "5";
+            
+            //m->pParent->setExtraData("userleftcount","5");
         }
         else{
-            user = "";
+            userleftcount--;
+            retuser = "";
+            m->userleftcount = Utf8StrFmt("%d",userleftcount);
+            //m->pParent->setExtraData("userleftcount",m->userleftcount);
         }
     }
+    
 	return S_OK;
 }
 

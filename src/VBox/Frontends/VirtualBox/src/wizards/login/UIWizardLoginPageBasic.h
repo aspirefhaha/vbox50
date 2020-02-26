@@ -39,6 +39,7 @@ protected:
 
     /* Widgets: */
     //QIToolButton *m_pSelectMediaButton;
+    QPushButton * m_pbChgPwd;
     QButtonGroup * m_pRole;
     QRadioButton * m_pAdmin;
 	QRadioButton * m_pUser;
@@ -65,7 +66,7 @@ protected:
 private slots:
 
     /* Open with file-open dialog: */
-
+    void sltChgPwd();
 
 private:
 
