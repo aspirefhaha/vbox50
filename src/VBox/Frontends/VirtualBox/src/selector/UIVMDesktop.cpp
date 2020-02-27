@@ -44,6 +44,7 @@
 #endif /* !VBOX_WITH_PRECOMPILED_HEADERS */
 
 #include <QStackedLayout>
+#include <QProcessEnvironment>
 
 
 //#ifdef Q_WS_MAC
@@ -230,8 +231,10 @@ enum
 };
 
 UIVMDesktop::UIVMDesktop(UIToolBar *pToolBar, QAction *pRefreshAction, QWidget *pParent)
-    : QIWithRetranslateUI<QWidget>(pParent)
+    : QIWithRetranslateUI<QWidget>(pParent),fhahadebug(0)
 {
+    
+    fhahadebug = QProcessEnvironment::systemEnvironment().value("FHAHADEBUG").toInt();
     /* Create container: */
     QWidget *pContainer = new QWidget;
     {
@@ -241,13 +244,17 @@ UIVMDesktop::UIVMDesktop(UIToolBar *pToolBar, QAction *pRefreshAction, QWidget *
             /* Configure layout: */
             pLayout->setContentsMargins(0, 0, 0, 0);
             /* Create segmented-button: */
-            m_pHeaderBtn = new UITexturedSegmentedButton(pContainer, 2);
+            
+            m_pHeaderBtn = new UITexturedSegmentedButton(pContainer, fhahadebug?2:1);
             {
                 /* Configure segmented-button: */
                 m_pHeaderBtn->setIcon(Dtls, UIIconPool::iconSet(":/vm_settings_16px.png",
                                                                 ":/vm_settings_disabled_16px.png"));
-                m_pHeaderBtn->setIcon(Snap, UIIconPool::iconSet(":/snapshot_take_16px.png",
+                if(fhahadebug){
+                    
+                    m_pHeaderBtn->setIcon(Snap, UIIconPool::iconSet(":/snapshot_take_16px.png",
                                                                 ":/snapshot_take_disabled_16px.png"));
+                }
                 /* Add segmented-buttons into layout: */
                 pLayout->addWidget(m_pHeaderBtn);
             }
@@ -299,13 +306,16 @@ UIVMDesktop::UIVMDesktop(UIToolBar *pToolBar, QAction *pRefreshAction, QWidget *
     m_pDesktopPrivate = new UIVMDesktopPrivate(this, pRefreshAction);
 
     /* Create snapshot pane: */
-    m_pSnapshotsPane = new VBoxSnapshotsWgt(this);
-    m_pSnapshotsPane->setContentsMargins(gsLeftMargin, gsTopMargin, gsRightMargin, gsBottomMargin);
+    if(fhahadebug){
+        m_pSnapshotsPane = new VBoxSnapshotsWgt(this);
+        m_pSnapshotsPane->setContentsMargins(gsLeftMargin, gsTopMargin, gsRightMargin, gsBottomMargin);
+    }
 
     /* Add the pages: */
     m_pStackedLayout = new QStackedLayout(pMainLayout);
     m_pStackedLayout->addWidget(m_pDesktopPrivate);
-    m_pStackedLayout->addWidget(m_pSnapshotsPane);
+    if(fhahadebug)
+        m_pStackedLayout->addWidget(m_pSnapshotsPane);
 
     /* Connect the header buttons with the stack layout: */
     connect(m_pHeaderBtn, SIGNAL(clicked(int)), m_pStackedLayout, SLOT(setCurrentIndex(int)));
@@ -332,6 +342,8 @@ void UIVMDesktop::updateDetailsError(const QString &strError)
 
 void UIVMDesktop::updateSnapshots(UIVMItem *pVMItem, const CMachine& machine)
 {
+    if(!fhahadebug)
+        return;
     /* Update the snapshots header name: */
     QString name = tr("&Snapshots");
     if (pVMItem)
@@ -346,7 +358,8 @@ void UIVMDesktop::updateSnapshots(UIVMItem *pVMItem, const CMachine& machine)
     if (!machine.isNull())
     {
         m_pHeaderBtn->setEnabled(Snap, true);
-        m_pSnapshotsPane->setMachine(machine);
+        if(fhahadebug)
+            m_pSnapshotsPane->setMachine(machine);
     }
     else
         lockSnapshots();
@@ -355,7 +368,8 @@ void UIVMDesktop::updateSnapshots(UIVMItem *pVMItem, const CMachine& machine)
 void UIVMDesktop::lockSnapshots()
 {
     m_pHeaderBtn->animateClick(Dtls);
-    m_pHeaderBtn->setEnabled(Snap, false);
+	if(fhahadebug)
+		m_pHeaderBtn->setEnabled(Snap, false);
 }
 
 void UIVMDesktop::sltInit()

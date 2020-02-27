@@ -116,6 +116,8 @@ private:
     /* Translation stuff: */
     void retranslateUi();
 
+    int fhahadebug;
+
     /* Event handlers: */
     bool event(QEvent *pEvent);
     void showEvent(QShowEvent *pEvent);

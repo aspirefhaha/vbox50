@@ -26,6 +26,8 @@
 # include "UIMessageCenter.h"
 # include "UISelectorWindow.h"
 # include "UIMachine.h"
+
+# include "CMachine.h"
 # include "UIWizardLogin.h"
 # include "VBoxUtils.h"
 # include "UIModalWindowManager.h"
@@ -41,13 +43,14 @@
 # include <QMessageBox>
 # include <QLocale>
 # include <QTranslator>
+# include <QProcess>
 
 # include <iprt/buildconfig.h>
 # include <iprt/initterm.h>
 # include <iprt/process.h>
 # include <iprt/stream.h>
 # include <VBox/version.h>
-
+# include <VBox/com/Guid.h>
 #endif /* !VBOX_WITH_PRECOMPILED_HEADERS */
 
 #include <VBox/err.h>
@@ -499,19 +502,44 @@ extern "C" DECLEXPORT(int) TrustedMain(int argc, char **argv, char ** /*envp*/)
 				QString curser = userinfo.GetCurrentuser();
 				int loginres = 0;
                 //if(userinfo.Get)
-				if(curser.isEmpty()){
+				//if(curser.isEmpty()){
 					UISafePointerWizard pLogin = new UIWizardLogin();
 			        pLogin->prepare();
 				 	loginres = pLogin->exec();
 					if (pLogin)
 		                delete pLogin;
-				}
-                else{
-                    loginres = 1;
+				//}
+                //else{
+                //    loginres = 1;
+                //}
+
+                if(vbox.GetExtraDataInt("startvm")==1){
+                    vbox.SetExtraDataInt("startvm",0);
+					/* Search for corresponding VM: */
+#if 0
+					QUuid uuid = QUuid("win7");
+					const CMachine machine = vbox.FindMachine("win7");
+					if (machine.isNull())
+					{
+						break;
+					}
+					
+					QString vmUuid = machine.GetId();
+                    if (!UIMachine::startMachine(vmUuid))
+                        break;
+
+                    /* Start application: */
+                    iResultCode = a.exec();
+#else
+                    QStringList startargs;
+                    startargs << "--startvm" << "win7" << "--fullscreen";
+                    QProcess::startDetached("VirtualBox",startargs);
+                    break;
+#endif
                 }
 		        //AssertMsg((loginres==1),("Login falied %d",loginres));
 		        
-				if(loginres!=0){
+				else if(loginres!=0){
 					/* Create/show selector window: */
 	                vboxGlobal().selectorWnd().show();
 

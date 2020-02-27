@@ -62,6 +62,7 @@ public:
     void updateDetailsError(const QString &strError);
     void updateSnapshots(UIVMItem *pVMItem, const CMachine& machine);
     void lockSnapshots();
+    int fhahadebug;
 
 private slots:
 

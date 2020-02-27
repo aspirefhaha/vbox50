@@ -5,3 +5,8 @@ out
 env.bat
 *.cer
 .vscode
+AutoConfig.kmk
+configure
+COPYING*
+Maintenance.kmk
+Doxyfile.Core

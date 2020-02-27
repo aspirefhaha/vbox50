@@ -15,6 +15,7 @@
 # include <QVBoxLayout>
 # include <QHBoxLayout>
 # include <QFormLayout>
+# include <QCheckBox>
 # include <QDateTime>
 
 /* GUI includes: */
@@ -30,13 +31,13 @@
 # include "QLineEdit.h"
 # include "QRadioButton.h"
 # include "QButtonGroup.h"
+# include "UIMachine.h"
 
 
 #endif /* !VBOX_WITH_PRECOMPILED_HEADERS */
 
 
-UIWizardLoginPage::UIWizardLoginPage()
-   
+UIWizardLoginPage::UIWizardLoginPage():m_bChgPwd(false)
 {
 }
 
@@ -63,6 +64,7 @@ UIWizardLoginPageBasic::UIWizardLoginPageBasic()
 		m_pTip = new QIRichTextLabel(this);
         QFormLayout *pUserPwdLayout = new QFormLayout;
 		QHBoxLayout * pRoleLayout = new QHBoxLayout;
+        QHBoxLayout * pChgPwdLayout = new QHBoxLayout(this);
         {
             
             //m_pSelectMediaButton = new QIToolButton(this);
@@ -72,6 +74,7 @@ UIWizardLoginPageBasic::UIWizardLoginPageBasic()
             //}
             //pSourceDiskLayout->addWidget(m_pMediaSelector);
             //pSourceDiskLayout->addWidget(m_pSelectMediaButton);
+            
             m_pRole = new QButtonGroup(this);
 			m_pAdmin = new QRadioButton(UIWizardLogin::tr("Admin"),this);
     		m_pAdmin->setIcon(QIcon(":/select_file_16px.png"));
@@ -84,17 +87,24 @@ UIWizardLoginPageBasic::UIWizardLoginPageBasic()
 			m_pPwd->setEchoMode(QLineEdit::Password);
 			pRoleLayout->addWidget(m_pAdmin);
 			pRoleLayout->addWidget(m_pUser);
-			
+			pChgPwdLayout->addStretch();
+            m_pckChgPwd = new QCheckBox(UIWizardLogin::tr("Change Pwd"),this);
+            pChgPwdLayout->addWidget(m_pckChgPwd);
 			pUserPwdLayout->addRow(UIWizardLogin::tr("Role"),pRoleLayout);
 			pUserPwdLayout->addRow(UIWizardLogin::tr("Password"),m_pPwd);
         }
         pMainLayout->addWidget(m_pLabel);
         pMainLayout->addLayout(pUserPwdLayout);
-        m_pbChgPwd = new QPushButton(UIWizardLogin::tr("Change Pwd"),this);
-        connect(m_pbChgPwd,SIGNAL(clicked()),this,SLOT(sltChgPwd()));
-        pMainLayout->addWidget(m_pbChgPwd);
+        //m_pbChgPwd = new QPushButton(UIWizardLogin::tr("Change Pwd"),this);
+        
+        
+        //connect(m_pbChgPwd,SIGNAL(clicked()),this,SLOT(sltChgPwd()));
+        connect(m_pUser,SIGNAL(toggled(bool)),this,SLOT(sltUser(bool)));
+        //pMainLayout->addWidget(m_pbChgPwd);
+        pMainLayout->addLayout(pChgPwdLayout);
 		pMainLayout->addWidget(m_pTip);
         pMainLayout->addStretch();
+        m_pPwd->setFocus();
     }
 
     /* Setup connections: */
@@ -105,6 +115,17 @@ UIWizardLoginPageBasic::UIWizardLoginPageBasic()
     registerField("source", this, "source");
     registerField("id", this, "id");
 	registerField("pwd*",m_pPwd);
+}
+
+void UIWizardLoginPageBasic::sltUser(bool checked)
+{
+    if(checked){
+        m_pckChgPwd->show();
+    }
+    else{
+        m_pckChgPwd->hide();
+        m_pckChgPwd->setCheckState(Qt::Unchecked);
+    }
 }
 
 void UIWizardLoginPageBasic::retranslateUi()
@@ -212,6 +233,12 @@ bool UIWizardLoginPageBasic::validatePage()
 
     /* Unlock finish button: */
     endProcessing();
+
+    if(userInfo.GetCurrentuser() == "user" && !m_pckChgPwd->isChecked()){
+        //fResult = false;
+        //UIMachine::startMachine("f77bb6bd-6fb7-44a8-a6d6-d9acfcdfe9ff");
+        vbox.SetExtraDataInt("startvm",1);
+    }
 
     /* Return result: */
     return fResult;

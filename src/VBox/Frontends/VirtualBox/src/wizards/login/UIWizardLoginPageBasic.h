@@ -18,11 +18,14 @@ class QIToolButton;
 class QIRichTextLabel;
 class QLineEdit;
 class QRadioButton;
+class QCheckBox;
 class QButtonGroup;
 
 /* Single page of the First Run wizard (base part): */
 class UIWizardLoginPage : public UIWizardPageBase
 {
+public:
+    bool m_bChgPwd;
 protected:
 
     /* Constructor: */
@@ -39,7 +42,8 @@ protected:
 
     /* Widgets: */
     //QIToolButton *m_pSelectMediaButton;
-    QPushButton * m_pbChgPwd;
+    //QPushButton * m_pbChgPwd;
+    QCheckBox * m_pckChgPwd;
     QButtonGroup * m_pRole;
     QRadioButton * m_pAdmin;
 	QRadioButton * m_pUser;
@@ -67,6 +71,7 @@ private slots:
 
     /* Open with file-open dialog: */
     void sltChgPwd();
+    void sltUser(bool);
 
 private:
 
