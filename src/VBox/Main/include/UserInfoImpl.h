@@ -66,7 +66,7 @@ private:
     HRESULT getUserleftcount(com::Utf8Str & userleftcount);
     HRESULT setUserleftcount(const com::Utf8Str & userleftcount);
     //HRESULT setLastuser(const com::Utf8Str & lastuser);
-    HRESULT setCurrentuser(const com::Utf8Str & currentuser);
+    //HRESULT setCurrentuser(const com::Utf8Str & currentuser);
     HRESULT getParent(ComPtr<IVirtualBox> &aParent);
 
     // wrapped IUserInfo methods

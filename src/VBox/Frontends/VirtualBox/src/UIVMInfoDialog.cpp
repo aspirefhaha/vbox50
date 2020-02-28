@@ -564,6 +564,7 @@ void UIVMInfoDialog::refreshStatistics()
     CMachine m = m_session.GetMachine();
 
     /* Runtime Information: */
+    if(vboxGlobal().fhahadebug || vboxGlobal().userInfo().GetCurrentuser() == "admin")
     {
         /* Get current console: */
         CConsole console = m_session.GetConsole();
@@ -669,8 +670,11 @@ void UIVMInfoDialog::refreshStatistics()
             strResult += formatValue(strLabel, aResolutions[iScreen], iMaxLength);
         }
         strResult += formatValue(tr("VM Uptime"), strUptime, iMaxLength);
-        strResult += formatValue(tr("Clipboard Mode"), strClipboardMode, iMaxLength);
-        strResult += formatValue(tr("Drag and Drop Mode"), strDnDMode, iMaxLength);
+        if(vboxGlobal().fhahadebug ){
+            strResult += formatValue(tr("Clipboard Mode"), strClipboardMode, iMaxLength);
+            strResult += formatValue(tr("Drag and Drop Mode"), strDnDMode, iMaxLength);
+        }
+        
         strResult += formatValue(VBoxGlobal::tr("VT-x/AMD-V", "details report"), strVirtualization, iMaxLength);
         strResult += formatValue(VBoxGlobal::tr("Nested Paging", "details report"), strNestedPaging, iMaxLength);
         strResult += formatValue(VBoxGlobal::tr("Unrestricted Execution", "details report"), strUnrestrictedExecution, iMaxLength);
@@ -682,6 +686,7 @@ void UIVMInfoDialog::refreshStatistics()
     }
 
     /* Storage statistics: */
+    if(vboxGlobal().fhahadebug || vboxGlobal().userInfo().GetCurrentuser() == "admin")
     {
         /* Prepare storage-statistics: */
         QString strStorageStat;
@@ -768,6 +773,7 @@ void UIVMInfoDialog::refreshStatistics()
     }
 
     /* Network statistics: */
+    if(vboxGlobal().fhahadebug)
     {
         /* Prepare netork-statistics: */
         QString strNetworkStat;

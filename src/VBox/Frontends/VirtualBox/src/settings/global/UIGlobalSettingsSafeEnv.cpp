@@ -100,8 +100,8 @@ void UIGlobalSettingsSafeEnv::resetUserPwd()
 
 void UIGlobalSettingsSafeEnv::accept()
 {
-    CVirtualBox vbox = vboxGlobal().virtualBox();
-    CUserInfo userInfo = vbox.GetUserInfo();
+    //CVirtualBox vbox = vboxGlobal().virtualBox();
+    //CUserInfo userInfo = vbox.GetUserInfo();
     /*QString oldPwd = ui->le_oldPwd->text();
     QString newPwd = ui->le_newPwd->text();
     QString verifyPwd = ui->le_verifyPwd->text();

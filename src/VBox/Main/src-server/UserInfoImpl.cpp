@@ -276,11 +276,11 @@ HRESULT UserInfo::getCurrentuser(com::Utf8Str &aUserName)
     return S_OK;
 }
 
-HRESULT UserInfo::setCurrentuser(const com::Utf8Str & currentuser)
-{
-    m->currentuser = currentuser;
-    return S_OK;
-}
+//HRESULT UserInfo::setCurrentuser(const com::Utf8Str & currentuser)
+//{
+//    m->currentuser = currentuser;
+//    return S_OK;
+//}
 
 HRESULT UserInfo::setUserpwd(const com::Utf8Str & userpwd)
 {

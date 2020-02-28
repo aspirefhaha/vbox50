@@ -1347,10 +1347,13 @@ void UISelectorWindow::prepareMenuUser(QMenu * pMenu)
 {
 	if(!pMenu->isEmpty())
 		return;
+    CUserInfo userInfo = vboxGlobal().userInfo();
 	pMenu->addAction(actionPool()->action(UIActionIndexST_M_User_ChgPWd));
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_SafeEnv_Setting));
+    if(fhahadebug || userInfo.GetCurrentuser() == "admin") 
+        pMenu->addAction(actionPool()->action(UIActionIndexST_M_SafeEnv_Setting));
 	m_userActions << actionPool()->action(UIActionIndexST_M_User_ChgPWd);
-    m_userActions << actionPool()->action(UIActionIndexST_M_SafeEnv_Setting);
+    if(fhahadebug || userInfo.GetCurrentuser() == "admin") 
+        m_userActions << actionPool()->action(UIActionIndexST_M_SafeEnv_Setting);
 }
 
 void UISelectorWindow::prepareMenuMachine(QMenu *pMenu)
@@ -1368,14 +1371,11 @@ void UISelectorWindow::prepareMenuMachine(QMenu *pMenu)
 	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Clone));
 	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Remove));
 	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_AddGroup));
-	}
-	
-    pMenu->addSeparator();
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_M_StartOrShow));
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_T_Pause));
-    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Reset));
-    pMenu->addMenu(actionPool()->action(UIActionIndexST_M_Machine_M_Close)->menu());
-	if(fhahadebug){
+        pMenu->addSeparator();
+        pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_M_StartOrShow));
+        pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_T_Pause));
+        pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Reset));
+        pMenu->addMenu(actionPool()->action(UIActionIndexST_M_Machine_M_Close)->menu());
 	    pMenu->addSeparator();
 	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_Discard));
 	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_ShowLogDialog));
@@ -1386,6 +1386,9 @@ void UISelectorWindow::prepareMenuMachine(QMenu *pMenu)
 	    pMenu->addSeparator();
 	    pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_SortParent));
 	}
+    else{
+        pMenu->addAction(actionPool()->action(UIActionIndexST_M_Machine_M_StartOrShow_S_StartNormal));
+    }
 
     /* Remember action list: */
 	if(fhahadebug){
@@ -1406,10 +1409,9 @@ void UISelectorWindow::prepareMenuMachine(QMenu *pMenu)
 	                     << actionPool()->action(UIActionIndexST_M_Machine_S_SortParent);
 	}
 	else{
-		m_machineActions << actionPool()->action(UIActionIndexST_M_Machine_M_StartOrShow)
-	                     << actionPool()->action(UIActionIndexST_M_Machine_T_Pause)
-	                     << actionPool()->action(UIActionIndexST_M_Machine_S_Reset)
-	                     ;
+		m_machineActions << actionPool()->action(UIActionIndexST_M_Machine_M_StartOrShow_S_StartNormal);
+	                     //<< actionPool()->action(UIActionIndexST_M_Machine_T_Pause)
+	                     //<< actionPool()->action(UIActionIndexST_M_Machine_S_Reset);
 	}
 }
 
@@ -1510,7 +1512,7 @@ void UISelectorWindow::prepareWidgets()
         mVMToolBar->setIconSize(QSize(32, 32));
     mVMToolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
-	CVirtualBox vbox = vboxGlobal().virtualBox();
+    CUserInfo userInfo = vboxGlobal().userInfo();
     
 	if(fhahadebug){
 	    mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_Machine_S_New));
@@ -1520,7 +1522,8 @@ void UISelectorWindow::prepareWidgets()
 	}
     
 	mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_User_ChgPWd));
-    mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_SafeEnv_Setting));
+    if(fhahadebug || userInfo.GetCurrentuser() == "admin") 
+        mVMToolBar->addAction(actionPool()->action(UIActionIndexST_M_SafeEnv_Setting));
 
     /* Prepare graphics VM list: */
     m_pChooser = new UIGChooser(this);
@@ -1574,6 +1577,7 @@ void UISelectorWindow::prepareWidgets()
 
 void UISelectorWindow::prepareConnections()
 {
+    CUserInfo userInfo = vboxGlobal().userInfo();
     /* Medium enumeration connections: */
     connect(&vboxGlobal(), SIGNAL(sigMediumEnumerationFinished()), this, SLOT(sltHandleMediumEnumerationFinish()));
 
@@ -1602,7 +1606,8 @@ void UISelectorWindow::prepareConnections()
 
     /* 'ChgPwd' menu connections: */
     connect(actionPool()->action(UIActionIndexST_M_User_ChgPWd),SIGNAL(triggered()),this,SLOT(sltChangeUserPwd()));
-    connect(actionPool()->action(UIActionIndexST_M_SafeEnv_Setting),SIGNAL(triggered()),this,SLOT(sltSafeEnvSetting()));
+    if(fhahadebug || userInfo.GetCurrentuser() == "admin")      
+        connect(actionPool()->action(UIActionIndexST_M_SafeEnv_Setting),SIGNAL(triggered()),this,SLOT(sltSafeEnvSetting()));
 
     /* 'Machine' menu connections: */
     connect(actionPool()->action(UIActionIndexST_M_Machine_S_Add), SIGNAL(triggered()), this, SLOT(sltShowAddMachineDialog()));

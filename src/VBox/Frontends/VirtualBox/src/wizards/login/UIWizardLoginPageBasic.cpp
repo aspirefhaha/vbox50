@@ -144,8 +144,7 @@ void UIWizardLoginPageBasic::initializePage()
     /* Translate page: */
     retranslateUi();
     
-    CVirtualBox vbox = vboxGlobal().virtualBox();
-    CUserInfo userinfo = vbox.GetUserInfo();
+    CUserInfo userinfo = vboxGlobal().userInfo();
     QString lastuser = userinfo.GetLastuser();
     if(lastuser=="admin"){
         m_pAdmin->setChecked(true);
@@ -175,9 +174,9 @@ bool UIWizardLoginPageBasic::validatePage()
     bool fResult = false;
 	
     startProcessing();
-	CVirtualBox vbox = vboxGlobal().virtualBox();
-    CUserInfo userInfo = vbox.GetUserInfo();
-	QString curser = userInfo.GetCurrentuser();
+    CVirtualBox vbox = vboxGlobal().virtualBox();
+    CUserInfo userInfo = vboxGlobal().userInfo();
+	//QString curser = userInfo.GetCurrentuser();
 	QString lastuser = userInfo.GetLastuser();
 	
 	//QString userpwd = userinfo.GetUserpwd();
@@ -185,7 +184,7 @@ bool UIWizardLoginPageBasic::validatePage()
 	//QString userpwd = vbox.GetUserpwd();
 	//QString	adminpwd = vbox.GetAdminpwd();
 	QString inputpwd = field("pwd").toString();
-	if(curser.isEmpty()){
+	//if(curser.isEmpty()){
 		if(m_pRole->checkedId() == 0){
 			//if(inputpwd == adminpwd){
             if(userInfo.Login("admin",inputpwd)=="admin"){
@@ -219,10 +218,10 @@ bool UIWizardLoginPageBasic::validatePage()
 			m_pTip->setText(UIWizardLogin::tr("<font color=red>Login Failed</font>"));
 		}
         //vbox.saveSettings();
-	}
-	else{
-		fResult = true;
-	}
+	//}
+	//else{
+	//	fResult = true;
+	//}
 	
     /* Lock finish button: */
 	//fResult = false;

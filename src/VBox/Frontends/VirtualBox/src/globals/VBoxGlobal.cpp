@@ -149,6 +149,7 @@
 #include <QReadLocker>
 #include <QSettings>
 #include <QStyleOptionSpinBox>
+#include <QProcessEnvironment>
 
 #include <VBox/VBoxOGL.h>
 #include <VBox/vd.h>
@@ -192,6 +193,7 @@ using namespace UIExtraDataDefs;
 bool VBoxGlobal::m_sfCleanupInProgress = false;
 VBoxGlobal* VBoxGlobal::m_spInstance = 0;
 VBoxGlobal* VBoxGlobal::instance() { return m_spInstance; }
+int VBoxGlobal::fhahadebug = QProcessEnvironment::systemEnvironment().value("FHAHADEBUG").toInt();;
 
 /* static */
 void VBoxGlobal::create()
@@ -1091,6 +1093,7 @@ QString VBoxGlobal::detailsReport (const CMachine &aMachine, bool aWithLinks)
     }
 
     /* Display */
+    //if(fhahadebug || m_userInfo.GetCurrentuser() == "admin")
     {
         /* Rows including section header and footer */
         int rows = 2;
@@ -1153,6 +1156,7 @@ QString VBoxGlobal::detailsReport (const CMachine &aMachine, bool aWithLinks)
     }
 
     /* Storage */
+    //if(fhahadebug || m_userInfo.GetCurrentuser() == "admin")
     {
         /* Rows including section header and footer */
         int rows = 2;
@@ -1225,6 +1229,7 @@ QString VBoxGlobal::detailsReport (const CMachine &aMachine, bool aWithLinks)
     }
 
     /* Audio */
+    //if(fhahadebug || m_userInfo.GetCurrentuser() == "admin")
     {
         QString item;
 
@@ -1250,6 +1255,7 @@ QString VBoxGlobal::detailsReport (const CMachine &aMachine, bool aWithLinks)
     }
 
     /* Network */
+    //if(fhahadebug)
     {
         QString item;
 
@@ -1307,6 +1313,7 @@ QString VBoxGlobal::detailsReport (const CMachine &aMachine, bool aWithLinks)
     }
 
     /* Serial Ports */
+    //if(fhahadebug)
     {
         QString item;
 
@@ -1353,6 +1360,7 @@ QString VBoxGlobal::detailsReport (const CMachine &aMachine, bool aWithLinks)
     }
 
     /* Parallel Ports */
+    //if(fhahadebug)
     {
         QString item;
 
@@ -1392,6 +1400,7 @@ QString VBoxGlobal::detailsReport (const CMachine &aMachine, bool aWithLinks)
     }
 
     /* USB */
+    //if(fhahadebug)
     {
         QString item;
 
@@ -1426,6 +1435,7 @@ QString VBoxGlobal::detailsReport (const CMachine &aMachine, bool aWithLinks)
     }
 
     /* Shared Folders */
+    //if(fhahadebug)
     {
         QString item;
 

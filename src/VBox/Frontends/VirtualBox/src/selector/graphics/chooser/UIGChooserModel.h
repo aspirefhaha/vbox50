@@ -89,7 +89,7 @@ public:
     /* Constructor/destructor: */
     UIGChooserModel(UIGChooser *pParent);
     ~UIGChooserModel();
-
+    int fhahadebug;
     /* API: Prepare/cleanup stuff: */
     void prepare();
     void cleanup();

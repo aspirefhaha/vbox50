@@ -64,8 +64,7 @@ void UIGlobalSettingsChgPwd::reject()
 
 void UIGlobalSettingsChgPwd::accept()
 {
-    CVirtualBox vbox = vboxGlobal().virtualBox();
-    CUserInfo userInfo = vbox.GetUserInfo();
+    CUserInfo userInfo = vboxGlobal().userInfo();
     QString oldPwd = ui->le_oldPwd->text();
     QString newPwd = ui->le_newPwd->text();
     QString verifyPwd = ui->le_verifyPwd->text();

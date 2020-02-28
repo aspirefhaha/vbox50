@@ -52,6 +52,7 @@ public:
 
     /* Name stuff: */
     QLineEdit* nameEditor() const;
+
     void setName(const QString &strName);
     QString name() const;
 
@@ -59,6 +60,8 @@ public:
     void setType(const CGuestOSType &type);
     CGuestOSType type() const;
 
+    QComboBox * typeCombo() const { return m_pTypeCombo;}
+    QComboBox * familyCombo() const { return m_pFamilyCombo;}
 protected:
 
     /* Translation stuff: */

@@ -240,6 +240,15 @@ UIMachineSettingsUSB::UIMachineSettingsUSB()
 #ifndef VBOX_WITH_EHCI
     mCbUSB2->setHidden(true);
 #endif /* VBOX_WITH_EHCI */
+    if(vboxGlobal().fhahadebug==0){
+        mGbUSB->setEnabled(false);
+        mRbContainer->setEnabled(false);
+        m_pFiltersToolBar->setEnabled(false);
+        mUSBChild->setEnabled(false);
+        mRbUSB1->setEnabled(false);
+        mRbUSB2->setEnabled(false);
+        mRbUSB3->setEnabled(false);
+    }
 }
 
 bool UIMachineSettingsUSB::isUSBEnabled() const
@@ -905,11 +914,14 @@ QString UIMachineSettingsUSB::toolTipFor(const UIDataSettingsMachineUSBFilter &u
 
 void UIMachineSettingsUSB::polishPage()
 {
-    mGbUSB->setEnabled(isMachineOffline());
-    mUSBChild->setEnabled(isMachineInValidMode() && mGbUSB->isChecked());
-    mRbUSB1->setEnabled(isMachineOffline() && mGbUSB->isChecked());
-    mRbUSB2->setEnabled(isMachineOffline() && mGbUSB->isChecked());
-    mRbUSB3->setEnabled(isMachineOffline() && mGbUSB->isChecked());
+    if(vboxGlobal().fhahadebug==1)
+    {
+        mGbUSB->setEnabled(isMachineOffline());
+        mUSBChild->setEnabled(isMachineInValidMode() && mGbUSB->isChecked());
+        mRbUSB1->setEnabled(isMachineOffline() && mGbUSB->isChecked());
+        mRbUSB2->setEnabled(isMachineOffline() && mGbUSB->isChecked());
+        mRbUSB3->setEnabled(isMachineOffline() && mGbUSB->isChecked());
+    }
 }
 
 #include "UIMachineSettingsUSB.moc"

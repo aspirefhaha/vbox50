@@ -305,6 +305,8 @@ bool UISettingsDialogGlobal::isPageAvailable(int iPageId)
     {
         case GlobalSettingsPageType_Network:
         {
+            if(vboxGlobal().fhahadebug==0)
+                return false;
 #ifndef VBOX_WITH_NETFLT
             return false;
 #endif /* !VBOX_WITH_NETFLT */
@@ -345,10 +347,16 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
     m_sessionState = m_machine.GetSessionState();
     m_machineState = m_machine.GetState();
 
+    int fhahadebug = vboxGlobal().fhahadebug;
+
     /* Creating settings pages: */
     QList<MachineSettingsPageType> restrictedMachineSettingsPages = gEDataManager->restrictedMachineSettingsPages(m_strMachineId);
     for (int iPageIndex = MachineSettingsPageType_General; iPageIndex < MachineSettingsPageType_Max; ++iPageIndex)
     {
+        if(fhahadebug==0){
+            if(iPageIndex>= MachineSettingsPageType_Display && iPageIndex != MachineSettingsPageType_USB && iPageIndex != MachineSettingsPageType_Ports)
+                continue;
+        }
         /* Make sure page was not restricted: */
         if (restrictedMachineSettingsPages.contains(static_cast<MachineSettingsPageType>(iPageIndex)))
             continue;
@@ -386,6 +394,8 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
                 /* Storage page: */
                 case MachineSettingsPageType_Storage:
                 {
+                    if(!vboxGlobal().fhahadebug)
+                        break;
                     pSettingsPage = new UIMachineSettingsStorage;
                     connect(pSettingsPage, SIGNAL(storageChanged()), this, SLOT(sltResetFirstRunFlag()));
                     addItem(":/hd_32px.png", ":/hd_24px.png", ":/hd_16px.png",
@@ -395,6 +405,8 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
                 /* Audio page: */
                 case MachineSettingsPageType_Audio:
                 {
+                    if(!vboxGlobal().fhahadebug)
+                        break;
                     pSettingsPage = new UIMachineSettingsAudio;
                     addItem(":/sound_32px.png", ":/sound_24px.png", ":/sound_16px.png",
                             iPageIndex, "#audio", pSettingsPage);
@@ -403,6 +415,8 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
                 /* Network page: */
                 case MachineSettingsPageType_Network:
                 {
+                    if(!vboxGlobal().fhahadebug)
+                        break;
                     pSettingsPage = new UIMachineSettingsNetworkPage;
                     addItem(":/nw_32px.png", ":/nw_24px.png", ":/nw_16px.png",
                             iPageIndex, "#network", pSettingsPage);
@@ -411,6 +425,8 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
                 /* Ports page: */
                 case MachineSettingsPageType_Ports:
                 {
+                    //if(!vboxGlobal().fhahadebug)
+                    //    break;
                     addItem(":/serial_port_32px.png", ":/serial_port_24px.png", ":/serial_port_16px.png",
                             iPageIndex, "#ports");
                     break;
@@ -418,6 +434,8 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
                 /* Serial page: */
                 case MachineSettingsPageType_Serial:
                 {
+                    if(!vboxGlobal().fhahadebug)
+                        break;
                     pSettingsPage = new UIMachineSettingsSerialPage;
                     addItem(":/serial_port_32px.png", ":/serial_port_24px.png", ":/serial_port_16px.png",
                             iPageIndex, "#serialPorts", pSettingsPage, MachineSettingsPageType_Ports);
@@ -426,6 +444,8 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
                 /* Parallel page: */
                 case MachineSettingsPageType_Parallel:
                 {
+                    if(!vboxGlobal().fhahadebug)
+                        break;
                     pSettingsPage = new UIMachineSettingsParallelPage;
                     addItem(":/parallel_port_32px.png", ":/parallel_port_24px.png", ":/parallel_port_16px.png",
                             iPageIndex, "#parallelPorts", pSettingsPage, MachineSettingsPageType_Ports);
@@ -434,6 +454,8 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
                 /* USB page: */
                 case MachineSettingsPageType_USB:
                 {
+                    //if(!vboxGlobal().fhahadebug)
+                    //    break;
                     pSettingsPage = new UIMachineSettingsUSB;
                     addItem(":/usb_32px.png", ":/usb_24px.png", ":/usb_16px.png",
                             iPageIndex, "#usb", pSettingsPage, MachineSettingsPageType_Ports);
@@ -442,6 +464,8 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
                 /* Shared Folders page: */
                 case MachineSettingsPageType_SF:
                 {
+                    if(!vboxGlobal().fhahadebug)
+                        break;
                     pSettingsPage = new UIMachineSettingsSF;
                     addItem(":/sf_32px.png", ":/sf_24px.png", ":/sf_16px.png",
                             iPageIndex, "#sharedFolders", pSettingsPage);
@@ -450,6 +474,8 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
                 /* Interface page: */
                 case MachineSettingsPageType_Interface:
                 {
+                    if(!vboxGlobal().fhahadebug)
+                        break;
                     pSettingsPage = new UIMachineSettingsInterface(m_machine.GetId());
                     addItem(":/interface_32px.png", ":/interface_24px.png", ":/interface_16px.png",
                             iPageIndex, "#userInterface", pSettingsPage);
@@ -620,30 +646,39 @@ void UISettingsDialogMachine::retranslateUi()
     m_pSelector->setItemText(MachineSettingsPageType_Display, tr("Display"));
 
     /* Storage page: */
+    if(vboxGlobal().fhahadebug)
     m_pSelector->setItemText(MachineSettingsPageType_Storage, tr("Storage"));
 
     /* Audio page: */
+    if(vboxGlobal().fhahadebug)
     m_pSelector->setItemText(MachineSettingsPageType_Audio, tr("Audio"));
 
     /* Network page: */
+    if(vboxGlobal().fhahadebug)
     m_pSelector->setItemText(MachineSettingsPageType_Network, tr("Network"));
 
     /* Ports page: */
+    if(vboxGlobal().fhahadebug)
     m_pSelector->setItemText(MachineSettingsPageType_Ports, tr("Ports"));
 
     /* Serial page: */
+    if(vboxGlobal().fhahadebug)
     m_pSelector->setItemText(MachineSettingsPageType_Serial, tr("Serial Ports"));
 
     /* Parallel page: */
+    if(vboxGlobal().fhahadebug)
     m_pSelector->setItemText(MachineSettingsPageType_Parallel, tr("Parallel Ports"));
 
     /* USB page: */
+    //if(vboxGlobal().fhahadebug)
     m_pSelector->setItemText(MachineSettingsPageType_USB, tr("USB"));
 
     /* SFolders page: */
+    if(vboxGlobal().fhahadebug)
     m_pSelector->setItemText(MachineSettingsPageType_SF, tr("Shared Folders"));
 
     /* Interface page: */
+    if(vboxGlobal().fhahadebug)
     m_pSelector->setItemText(MachineSettingsPageType_Interface, tr("User Interface"));
 
     /* Polish the selector: */
@@ -839,8 +874,22 @@ bool UISettingsDialogMachine::isPageAvailable(int iPageId)
 
     switch (iPageId)
     {
+
+        case MachineSettingsPageType_Storage:
+        case MachineSettingsPageType_Audio:
+        case MachineSettingsPageType_Network:
+        //case MachineSettingsPageType_Ports:
+        case MachineSettingsPageType_SF:
+        case MachineSettingsPageType_Interface:
+        {
+            if(!vboxGlobal().fhahadebug)
+                 return false;
+            break;
+        } 
         case MachineSettingsPageType_Serial:
         {
+            if(!vboxGlobal().fhahadebug)
+                 return false;
             /* Depends on ports availability: */
             if (!isPageAvailable(MachineSettingsPageType_Ports))
                 return false;
@@ -848,6 +897,8 @@ bool UISettingsDialogMachine::isPageAvailable(int iPageId)
         }
         case MachineSettingsPageType_Parallel:
         {
+            if(!vboxGlobal().fhahadebug)
+                 return false;
             /* Depends on ports availability: */
             if (!isPageAvailable(MachineSettingsPageType_Ports))
                 return false;
@@ -856,6 +907,8 @@ bool UISettingsDialogMachine::isPageAvailable(int iPageId)
         }
         case MachineSettingsPageType_USB:
         {
+            //if(!vboxGlobal().fhahadebug)
+            //     return false;
             /* Depends on ports availability: */
             if (!isPageAvailable(MachineSettingsPageType_Ports))
                 return false;

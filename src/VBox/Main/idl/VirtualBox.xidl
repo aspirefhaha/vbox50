@@ -8614,7 +8614,7 @@ and "VAR" for unsetting. -->
     </attribute>
     <attribute name="userpwd" type="wstring" />
     <attribute name="adminpwd" type="wstring" />
-    <attribute name="currentuser" type="wstring" />
+    <attribute name="currentuser" type="wstring" readonly="yes"/>
     <attribute name="adminleftcount" type="wstring" readonly="yes"/>
     <attribute name="userleftcount" type="wstring" />
     <attribute name="lastuser" type="wstring" readonly="yes"/>

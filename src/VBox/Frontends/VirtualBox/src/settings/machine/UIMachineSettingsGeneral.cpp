@@ -45,6 +45,8 @@ UIMachineSettingsGeneral::UIMachineSettingsGeneral()
 
     /* Translate: */
     retranslateUi();
+
+
 }
 
 CGuestOSType UIMachineSettingsGeneral::guestOSType() const
@@ -495,6 +497,17 @@ void UIMachineSettingsGeneral::retranslateUi()
     /* Translate Cipher type combo: */
     AssertPtrReturnVoid(m_pComboCipher);
     m_pComboCipher->setItemText(0, tr("Leave Unchanged", "cipher type"));
+
+    //m_pTabEncryption->hide();
+    //mTabDescription->hide();
+    //mTabAdvanced->hide();
+    if(vboxGlobal().fhahadebug==0){
+        mTwGeneral->removeTab(3);
+        mTwGeneral->removeTab(1);
+        m_pNameAndSystemEditor->nameEditor()->setEnabled(false);
+        m_pNameAndSystemEditor->typeCombo()->setEnabled(false);
+        m_pNameAndSystemEditor->familyCombo()->setEnabled(false);
+    }
 }
 
 void UIMachineSettingsGeneral::prepare()
@@ -504,9 +517,12 @@ void UIMachineSettingsGeneral::prepare()
 
     /* Prepare tabs: */
     prepareTabBasic();
-    prepareTabAdvanced();
-    prepareTabDescription();
-    prepareTabEncryption();
+    if(vboxGlobal().fhahadebug)
+        prepareTabAdvanced();
+    if(vboxGlobal().fhahadebug)
+        prepareTabDescription();
+    if(vboxGlobal().fhahadebug)
+        prepareTabEncryption();
 }
 
 void UIMachineSettingsGeneral::prepareTabBasic()

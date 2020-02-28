@@ -72,6 +72,7 @@ class VBoxGlobal : public QObject
 
 public:
 
+    static int fhahadebug;
     /** VM launch modes. */
     enum LaunchMode
     {
