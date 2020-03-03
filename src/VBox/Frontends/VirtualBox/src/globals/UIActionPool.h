@@ -545,7 +545,7 @@ protected:
 
     QKeySequence defaultShortcut(UIActionPoolType) const
     {
-        return QKeySequence("Ctrl+E");
+        return QKeySequence("Ctrl+B");
     }
 
     void retranslateUi()

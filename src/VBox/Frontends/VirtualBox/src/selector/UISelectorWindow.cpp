@@ -188,7 +188,7 @@ void UISelectorWindow::sltSnapshotChanged(QString strId)
 void UISelectorWindow::sltDetailsViewIndexChanged(int iWidgetIndex)
 {
     if (iWidgetIndex){
-        if(fhahadebug)
+        //if(fhahadebug)
             m_pContainer->setCurrentWidget(m_pVMDesktop);
     }
     else
@@ -930,7 +930,7 @@ void UISelectorWindow::sltCurrentVMItemChanged(bool fRefreshDetails, bool fRefre
     {
         /* Make sure valid widget raised: */
         if (m_pVMDesktop->widgetIndex()){
-            if(fhahadebug)
+            //if(fhahadebug)
                 m_pContainer->setCurrentWidget(m_pVMDesktop);
         }
         else
@@ -949,7 +949,7 @@ void UISelectorWindow::sltCurrentVMItemChanged(bool fRefreshDetails, bool fRefre
     else
     {
         /* Make sure valid widget raised: */
-        if(fhahadebug)
+        //if(fhahadebug)
             m_pContainer->setCurrentWidget(m_pVMDesktop);
 
         /* Note that the machine becomes inaccessible (or if the last VM gets
@@ -1221,7 +1221,8 @@ void UISelectorWindow::prepareMenuBar()
 #endif /* Q_WS_MAC */
 
     /* Prepare Help-menu: */
-    menuBar()->addMenu(actionPool()->action(UIActionIndex_Menu_Help)->menu());
+    if(vboxGlobal().fhahadebug)
+        menuBar()->addMenu(actionPool()->action(UIActionIndex_Menu_Help)->menu());
 
     /* Setup menubar policy: */
     menuBar()->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -1544,8 +1545,8 @@ void UISelectorWindow::prepareWidgets()
     
     m_pContainer->addWidget(m_pDetails);
     
-    if(fhahadebug)
-        m_pContainer->addWidget(m_pVMDesktop);
+    //if(fhahadebug)
+    m_pContainer->addWidget(m_pVMDesktop);
 
     /* Layout all the widgets: */
 #if MAC_LEOPARD_STYLE

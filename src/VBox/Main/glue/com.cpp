@@ -211,6 +211,62 @@ static int composeHomePath(char *aDir, size_t aDirLen,
     return vrc;
 }
 
+int GetCurrentDirectory(char *aDir, size_t aDirLen)
+{
+    AssertReturn(aDir, VERR_INVALID_POINTER);
+    AssertReturn(aDirLen > 0, VERR_BUFFER_OVERFLOW);
+
+    /* start with null */
+    *aDir = 0;
+
+    char szTmp[RTPATH_MAX];
+    int vrc = RTEnvGetEx(RTENV_DEFAULT, "VBOX_CURRENT_PATH", szTmp, sizeof(szTmp), NULL);
+    if (RT_SUCCESS(vrc) || vrc == VERR_ENV_VAR_NOT_FOUND)
+    {
+        bool fFound = false;
+        if (RT_SUCCESS(vrc))
+        {
+            /* get the full path name */
+            vrc = RTPathAbs(szTmp, aDir, aDirLen);
+        }
+        else
+        {
+#if !defined(RT_OS_WINDOWS) && !defined(RT_OS_DARWIN)
+            if(0==getcwd(aDir,aDirLen)){ //Failure
+                vrc = VERR_GENERAL_FAILURE;
+            }
+            else{
+                vrc = VINF_SUCCESS;
+            }
+#endif
+           
+            if(0==GetModuleFileNameA(NULL,aDir,aDirLen)){ //Failure
+                
+                vrc = VERR_GENERAL_FAILURE;
+                
+            }
+            else{
+                char * pLastPos = strrchr(aDir,'/');
+                if(pLastPos==NULL){
+                    pLastPos = strrchr(aDir,'\\');
+                }
+                if(pLastPos){
+                    *pLastPos = 0;
+                }
+                else{
+                    vrc = VERR_GENERAL_FAILURE;
+                }
+                vrc = VINF_SUCCESS;
+            }
+
+        }
+
+        
+    }
+
+    return vrc;
+}
+
 int GetVBoxUserHomeDirectory(char *aDir, size_t aDirLen, bool fCreateDir)
 {
     AssertReturn(aDir, VERR_INVALID_POINTER);

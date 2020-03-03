@@ -546,6 +546,11 @@ void ConfigFileBase::readUserInfo(const xml::ElementNode & elmUserInfo,
 		}
 		else
 			throw ConfigFileError(this, NULL, N_("Required userinfo userpwd or adminpwd attribute is missing %s"),"nothing");
+            //userinfo.adminPwd = "admin";
+			//userinfo.userPwd = "pwd";
+            //userinfo.lastUser = "";
+            //userinfo.adminLeftCount = "5";
+            //userinfo.userLeftCount = "5";
 
 		
 	}
@@ -1632,6 +1637,9 @@ MainConfigFile::MainConfigFile(const Utf8Str *pstrFilename)
         srv.strIPUpper = "192.168.56.254";
         srv.fEnabled = true;
         llDhcpServers.push_back(srv);
+
+        userInfo.adminLeftCount = "5";
+        userInfo.userLeftCount = "5";
     }
 }
 

@@ -23,6 +23,7 @@
 
 /* GUI includes: */
 # include <QMessageBox>
+# include <QDateTime>
 # include "VBoxGlobal.h"
 # include "UIGlobalSettingsChgPwd.h"
 
@@ -86,7 +87,9 @@ void UIGlobalSettingsChgPwd::accept()
         else{
             userInfo.SetUserpwd(newPwd);
         }
-        
+        QDateTime current_date_time =QDateTime::currentDateTime();
+        QString current_date =current_date_time.toString("yyyy.MM.dd hh:mm:ss.zzz");
+        vboxGlobal().virtualBox().SetExtraData("safeenvlastsave",current_date);
         return QDialog::accept();
         
     }

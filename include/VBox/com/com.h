@@ -81,6 +81,24 @@ void GetInterfaceNameByIID(const GUID &aIID, BSTR *aName);
 int GetVBoxUserHomeDirectory(char *aDir, size_t aDirLen, bool fCreateDir = true);
 
 /**
+ *  Returns the VirtualBox current directory.
+ *
+ *  On failure, this function will return a path that caused a failure (or
+ *  NULL if the failure is not path-related).
+ *
+ *  On success, This may also fail with the corresponding status code.
+ *
+ *  If @a aDirLen is smaller than RTPATH_MAX then there is a great chance that
+ *  this method will return VERR_BUFFER_OVERFLOW.
+ *
+ *  @param aDir        Buffer to store the directory string in UTF-8 encoding.
+ *  @param aDirLen     Length of the supplied buffer including space for the
+ *                     terminating null character, in bytes.
+ *  @return            VBox status code.
+ */
+int GetCurrentDirectory(char *aDir, size_t aDirLen);
+
+/**
  *  Creates a release log file, used both in VBoxSVC and in API clients.
  *
  *  @param pcszEntity       Human readable name of the program.

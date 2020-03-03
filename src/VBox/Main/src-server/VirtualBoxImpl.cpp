@@ -377,9 +377,11 @@ HRESULT VirtualBox::init()
     LogFlowThisFunc(("Version: %s, Package: %s, API Version: %s\n", sVersion.c_str(), sPackageType.c_str(), sAPIVersion.c_str()));
 
     /* Get the VirtualBox home directory. */
+    /* Get the VirtualBox current directory. */
     {
         char szHomeDir[RTPATH_MAX];
-        int vrc = com::GetVBoxUserHomeDirectory(szHomeDir, sizeof(szHomeDir));
+        //int vrc = com::GetVBoxUserHomeDirectory(szHomeDir, sizeof(szHomeDir));
+        int vrc = com::GetCurrentDirectory(szHomeDir,sizeof(szHomeDir));
         if (RT_FAILURE(vrc))
             return setError(E_FAIL,
                             tr("Could not create the VirtualBox home directory '%s' (%Rrc)"),
