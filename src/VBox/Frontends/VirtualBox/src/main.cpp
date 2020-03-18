@@ -532,7 +532,10 @@ extern "C" DECLEXPORT(int) TrustedMain(int argc, char **argv, char ** /*envp*/)
                     iResultCode = a.exec();
 #else
                     QStringList startargs;
-                    startargs << "--startvm" << "win7" << "--fullscreen";
+                    QString startvmname = vbox.GetExtraData("vmname");
+                    if(startvmname.isEmpty())
+                        startvmname="win7";
+                    startargs << "--startvm" << startvmname << "--fullscreen";
                     QProcess::startDetached("VirtualBox",startargs);
                     break;
 #endif
