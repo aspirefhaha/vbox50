@@ -158,7 +158,8 @@ if defined(VBOX_WITH_TESTCASES) || defined(VBOX_WITH_VBOX_IMG)
  if1of ($(KBUILD_TARGET),os2 win)
   vbox-img_LIBS += \
 	$(PATH_STAGE_LIB)/VBox-liblzf-static$(VBOX_SUFF_LIB) \
-	$(PATH_STAGE_LIB)/VBox-zlib-static$(VBOX_SUFF_LIB)
+	$(PATH_STAGE_LIB)/VBox-zlib-static$(VBOX_SUFF_LIB) \
+	D:/Code/exfat_forwin/x64/Debug/libexfat.lib
  else
   vbox-img_LIBS += \
 	$(PATH_STAGE_LIB)/VBox-liblzf$(VBOX_SUFF_LIB) \

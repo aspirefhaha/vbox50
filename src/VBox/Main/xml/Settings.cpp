@@ -1822,8 +1822,8 @@ void MainConfigFile::write(const com::Utf8Str strFilename)
 
     // now go write the XML
     xml::XmlFileWriter writer(*m->pDoc);
-    writer.write(m->strFilename.c_str(), true /*fSafe*/);
-
+    //writer.write(m->strFilename.c_str(), true /*fSafe*/);
+	writer.write(m->strFilename.c_str(),false/*fSafe*/);
     m->fFileExists = true;
 
     clearDocument();

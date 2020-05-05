@@ -250,6 +250,7 @@ RTCString *VBoxExtPackLoadDesc(const char *a_pszDir, PVBOXEXTPACKDESC a_pExtPack
     xml::Document       Doc;
     {
         xml::XmlFileParser  Parser;
+		RTPathJoin(szFilePath,sizeof(szFilePath),"/",VBOX_EXTPACK_DESCRIPTION_NAME);
         try
         {
             Parser.read(szFilePath, Doc);

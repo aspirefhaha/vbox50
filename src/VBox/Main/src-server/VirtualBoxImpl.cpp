@@ -393,10 +393,11 @@ HRESULT VirtualBox::init()
     LogRel(("Home directory: '%s'\n", m->strHomeDir.c_str()));
 
     /* compose the VirtualBox.xml file name */
-    unconst(m->strSettingsFilePath) = Utf8StrFmt("%s%c%s",
-                                                 m->strHomeDir.c_str(),
-                                                 RTPATH_DELIMITER,
-                                                 VBOX_GLOBAL_SETTINGS_FILE);
+    // unconst(m->strSettingsFilePath) = Utf8StrFmt("%s%c%s",
+    //                                              m->strHomeDir.c_str(),
+    //                                              RTPATH_DELIMITER,
+    //                                              VBOX_GLOBAL_SETTINGS_FILE);
+    unconst(m->strSettingsFilePath) = Utf8StrFmt("/%s",VBOX_GLOBAL_SETTINGS_FILE);
     HRESULT rc = S_OK;
     bool fCreate = false;
     try

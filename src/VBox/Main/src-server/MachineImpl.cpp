@@ -625,6 +625,7 @@ HRESULT Machine::initImpl(VirtualBox *aParent,
 
     /* get the full file name */
     int vrc1 = mParent->i_calculateFullPath(strConfigFile, mData->m_strConfigFileFull);
+	 mData->m_strConfigFileFull = strConfigFile;
     if (RT_FAILURE(vrc1))
         return setError(VBOX_E_FILE_ERROR,
                         tr("Invalid machine settings file name '%s' (%Rrc)"),

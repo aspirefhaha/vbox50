@@ -1,6 +1,6 @@
 out
 *.log
-.el
+*.el
 .scm-settings
 env.bat
 *.cer

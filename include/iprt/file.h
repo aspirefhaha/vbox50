@@ -95,6 +95,33 @@ RTDECL(bool) RTFileExists(const char *pszPath);
 RTDECL(int) RTFileQuerySize(const char *pszPath, uint64_t *pcbFile);
 
 
+/**
+ * Checks if the specified file name exists and is a regular file.
+ *
+ * Symbolic links will be resolved.
+ *
+ * @returns true if it's a regular file, false if it isn't.
+ * @param   pszPath         The path to the file.
+ *
+ * @sa      RTDirExists, RTPathExists, RTSymlinkExists.
+ */
+RTDECL(bool) EFFileExists(const char *pszPath);
+
+/**
+ * Queries the size of a file, given the path to it.
+ *
+ * Symbolic links will be resolved.
+ *
+ * @returns IPRT status code.
+ * @param   pszPath         The path to the file.
+ * @param   pcbFile         Where to return the file size (bytes).
+ *
+ * @sa      EFFileGetSize, RTPathQueryInfoEx.
+ */
+RTDECL(int) EFFileQuerySize(const char *pszPath, uint64_t *pcbFile);
+
+
+
 /** @name Open flags
  * @{ */
 /** Open the file with read access. */
@@ -259,6 +286,8 @@ RTR3DECL(int)  RTFileSetForceFlags(unsigned fOpenForAccess, unsigned fSet, unsig
  */
 RTDECL(int)  RTFileOpen(PRTFILE pFile, const char *pszFilename, uint64_t fOpen);
 
+RTDECL(int)  EFFileOpen(PRTFILE pFile, const char *pszFilename, uint64_t fOpen);
+
 /**
  * Open a file given as a format string.
  *
@@ -271,7 +300,6 @@ RTDECL(int)  RTFileOpen(PRTFILE pFile, const char *pszFilename, uint64_t fOpen);
  * @param   ...             Arguments to the format string.
  */
 RTDECL(int)  RTFileOpenF(PRTFILE pFile, uint64_t fOpen, const char *pszFilenameFmt, ...);
-
 /**
  * Open a file given as a format string.
  *
@@ -301,7 +329,7 @@ RTDECL(int)  RTFileOpenBitBucket(PRTFILE phFile, uint64_t fAccess);
  * @param   File            The file handle to close.
  */
 RTDECL(int)  RTFileClose(RTFILE File);
-
+RTDECL(int)  EFFileClose(RTFILE File);
 /**
  * Creates an IPRT file handle from a native one.
  *
@@ -327,6 +355,7 @@ RTDECL(RTHCINTPTR) RTFileToNative(RTFILE File);
  * @todo    This is a RTPath api!
  */
 RTDECL(int)  RTFileDelete(const char *pszFilename);
+RTDECL(int)  EFFileDelete(const char *pszFilename);
 
 /** @name Seek flags.
  * @{ */
@@ -354,6 +383,7 @@ RTDECL(int)  RTFileDelete(const char *pszFilename);
  *                      NULL is allowed.
  */
 RTDECL(int)  RTFileSeek(RTFILE File, int64_t offSeek, unsigned uMethod, uint64_t *poffActual);
+RTDECL(int)  EFFileSeek(RTFILE File, int64_t offSeek, unsigned uMethod, uint64_t *poffActual);
 
 /**
  * Read bytes from a file.
@@ -366,6 +396,7 @@ RTDECL(int)  RTFileSeek(RTFILE File, int64_t offSeek, unsigned uMethod, uint64_t
  *                      If NULL an error will be returned for a partial read.
  */
 RTDECL(int)  RTFileRead(RTFILE File, void *pvBuf, size_t cbToRead, size_t *pcbRead);
+RTDECL(int)  EFFileRead(RTFILE File, void *pvBuf, size_t cbToRead, size_t *pcbRead);
 
 /**
  * Read bytes from a file at a given offset.
@@ -380,6 +411,7 @@ RTDECL(int)  RTFileRead(RTFILE File, void *pvBuf, size_t cbToRead, size_t *pcbRe
  *                      If NULL an error will be returned for a partial read.
  */
 RTDECL(int)  RTFileReadAt(RTFILE File, RTFOFF off, void *pvBuf, size_t cbToRead, size_t *pcbRead);
+RTDECL(int)  EFFileReadAt(RTFILE File, RTFOFF off, void *pvBuf, size_t cbToRead, size_t *pcbRead);
 
 /**
  * Read bytes from a file at a given offset into a S/G buffer.
@@ -394,6 +426,7 @@ RTDECL(int)  RTFileReadAt(RTFILE File, RTFOFF off, void *pvBuf, size_t cbToRead,
  *                      If NULL an error will be returned for a partial read.
  */
 RTDECL(int)  RTFileSgReadAt(RTFILE hFile, RTFOFF off, PRTSGBUF pSgBuf, size_t cbToRead, size_t *pcbRead);
+RTDECL(int)  EFFileSgReadAt(RTFILE hFile, RTFOFF off, PRTSGBUF pSgBuf, size_t cbToRead, size_t *pcbRead);
 
 /**
  * Write bytes to a file.
@@ -406,6 +439,7 @@ RTDECL(int)  RTFileSgReadAt(RTFILE hFile, RTFOFF off, PRTSGBUF pSgBuf, size_t cb
  *                      If NULL an error will be returned for a partial write.
  */
 RTDECL(int)  RTFileWrite(RTFILE File, const void *pvBuf, size_t cbToWrite, size_t *pcbWritten);
+RTDECL(int)  EFFileWrite(RTFILE File, const void *pvBuf, size_t cbToWrite, size_t *pcbWritten);
 
 /**
  * Write bytes to a file at a given offset.
@@ -420,6 +454,7 @@ RTDECL(int)  RTFileWrite(RTFILE File, const void *pvBuf, size_t cbToWrite, size_
  *                      If NULL an error will be returned for a partial write.
  */
 RTDECL(int)  RTFileWriteAt(RTFILE File, RTFOFF off, const void *pvBuf, size_t cbToWrite, size_t *pcbWritten);
+RTDECL(int)  EFFileWriteAt(RTFILE File, RTFOFF off, const void *pvBuf, size_t cbToWrite, size_t *pcbWritten);
 
 /**
  * Write bytes from a S/G buffer to a file at a given offset.
@@ -434,6 +469,7 @@ RTDECL(int)  RTFileWriteAt(RTFILE File, RTFOFF off, const void *pvBuf, size_t cb
  *                      If NULL an error will be returned for a partial write.
  */
 RTDECL(int)  RTFileSgWriteAt(RTFILE hFile, RTFOFF off, PRTSGBUF pSgBuf, size_t cbToWrite, size_t *pcbWritten);
+RTDECL(int)  EFFileSgWriteAt(RTFILE hFile, RTFOFF off, PRTSGBUF pSgBuf, size_t cbToWrite, size_t *pcbWritten);
 
 /**
  * Flushes the buffers for the specified file.
@@ -442,6 +478,7 @@ RTDECL(int)  RTFileSgWriteAt(RTFILE hFile, RTFOFF off, PRTSGBUF pSgBuf, size_t c
  * @param   File        Handle to the file.
  */
 RTDECL(int)  RTFileFlush(RTFILE File);
+RTDECL(int)  EFFileFlush(RTFILE File);
 
 /**
  * Set the size of the file.
@@ -451,6 +488,7 @@ RTDECL(int)  RTFileFlush(RTFILE File);
  * @param   cbSize      The new file size.
  */
 RTDECL(int)  RTFileSetSize(RTFILE File, uint64_t cbSize);
+RTDECL(int)  EFFileSetSize(RTFILE File, uint64_t cbSize);
 
 /**
  * Query the size of the file.
@@ -460,6 +498,7 @@ RTDECL(int)  RTFileSetSize(RTFILE File, uint64_t cbSize);
  * @param   pcbSize     Where to store the filesize.
  */
 RTDECL(int)  RTFileGetSize(RTFILE File, uint64_t *pcbSize);
+RTDECL(int)  EFFileGetSize(RTFILE File, uint64_t *pcbSize);
 
 /**
  * Determine the maximum file size.
@@ -470,6 +509,7 @@ RTDECL(int)  RTFileGetSize(RTFILE File, uint64_t *pcbSize);
  * @see     RTFileGetMaxSizeEx.
  */
 RTDECL(RTFOFF) RTFileGetMaxSize(RTFILE File);
+RTDECL(RTFOFF) EFFileGetMaxSize(RTFILE File);
 
 /**
  * Determine the maximum file size.
@@ -480,6 +520,7 @@ RTDECL(RTFOFF) RTFileGetMaxSize(RTFILE File);
  * @see     RTFileGetMaxSize.
  */
 RTDECL(int) RTFileGetMaxSizeEx(RTFILE File, PRTFOFF pcbMax);
+RTDECL(int) EFFileGetMaxSizeEx(RTFILE File, PRTFOFF pcbMax);
 
 /**
  * Determine the maximum file size depending on the file system the file is stored on.
@@ -489,6 +530,7 @@ RTDECL(int) RTFileGetMaxSizeEx(RTFILE File, PRTFOFF pcbMax);
  * @param   File        Handle to the file.
  */
 RTDECL(RTFOFF) RTFileGetMaxSize(RTFILE File);
+RTDECL(RTFOFF) EFFileGetMaxSize(RTFILE File);
 
 /**
  * Gets the current file position.
@@ -498,6 +540,7 @@ RTDECL(RTFOFF) RTFileGetMaxSize(RTFILE File);
  * @param   File        Handle to the file.
  */
 RTDECL(uint64_t)  RTFileTell(RTFILE File);
+RTDECL(uint64_t)  EFFileTell(RTFILE File);
 
 /**
  * Checks if the supplied handle is valid.
@@ -507,6 +550,7 @@ RTDECL(uint64_t)  RTFileTell(RTFILE File);
  * @param   File        The file handle
  */
 RTDECL(bool) RTFileIsValid(RTFILE File);
+RTDECL(bool) EFFileIsValid(RTFILE File);
 
 /**
  * Copies a file.
@@ -519,6 +563,7 @@ RTDECL(bool) RTFileIsValid(RTFILE File);
  *                      This file will be created.
  */
 RTDECL(int) RTFileCopy(const char *pszSrc, const char *pszDst);
+RTDECL(int) EFFileCopy(const char *pszSrc, const char *pszDst);
 
 /**
  * Copies a file given the handles to both files.
@@ -531,6 +576,7 @@ RTDECL(int) RTFileCopy(const char *pszSrc, const char *pszDst);
  *                      On failures the file position and size is undefined.
  */
 RTDECL(int) RTFileCopyByHandles(RTFILE FileSrc, RTFILE FileDst);
+RTDECL(int) EFFileCopyByHandles(RTFILE FileSrc, RTFILE FileDst);
 
 /** Flags for RTFileCopyEx().
  * @{ */
@@ -659,6 +705,7 @@ RTDECL(int) RTFileCompareByHandlesEx(RTFILE hFile1, RTFILE hFile2, uint32_t fFla
  * @param   fRename     See RTPathRename.
  */
 RTDECL(int) RTFileRename(const char *pszSrc, const char *pszDst, unsigned fRename);
+RTDECL(int) EFFileRename(const char *pszSrc, const char *pszDst, unsigned fRename);
 
 
 /** @name RTFileMove flags (bit masks).
@@ -732,6 +779,7 @@ RTDECL(int) RTFileModeToFlagsEx(const char *pszAccess, const char *pszDispositio
  * @param   fMove       A combination of the RTFILEMOVE_* flags.
  */
 RTDECL(int) RTFileMove(const char *pszSrc, const char *pszDst, unsigned fMove);
+RTDECL(int) EFFileMove(const char *pszSrc, const char *pszDst, unsigned fMove);
 
 
 /**
@@ -887,6 +935,7 @@ RTDECL(int)  RTFileUnlock(RTFILE File, int64_t offLock, uint64_t cbLock);
  *                                  Use RTFSOBJATTRADD_NOTHING if this doesn't matter.
  */
 RTDECL(int) RTFileQueryInfo(RTFILE File, PRTFSOBJINFO pObjInfo, RTFSOBJATTRADD enmAdditionalAttribs);
+RTDECL(int) EFFileQueryInfo(RTFILE File, PRTFSOBJINFO pObjInfo, RTFSOBJATTRADD enmAdditionalAttribs);
 
 /**
  * Changes one or more of the timestamps associated of file system object.
@@ -914,6 +963,8 @@ RTDECL(int) RTFileQueryInfo(RTFILE File, PRTFSOBJINFO pObjInfo, RTFSOBJATTRADD e
  */
 RTDECL(int) RTFileSetTimes(RTFILE File, PCRTTIMESPEC pAccessTime, PCRTTIMESPEC pModificationTime,
                            PCRTTIMESPEC pChangeTime, PCRTTIMESPEC pBirthTime);
+RTDECL(int) EFFileSetTimes(RTFILE File, PCRTTIMESPEC pAccessTime, PCRTTIMESPEC pModificationTime,
+                           PCRTTIMESPEC pChangeTime, PCRTTIMESPEC pBirthTime);
 
 /**
  * Gets one or more of the timestamps associated of file system object.
@@ -928,6 +979,8 @@ RTDECL(int) RTFileSetTimes(RTFILE File, PCRTTIMESPEC pAccessTime, PCRTTIMESPEC p
  * @remark  This is wrapper around RTFileQueryInfo() and exists to complement RTFileSetTimes().
  */
 RTDECL(int) RTFileGetTimes(RTFILE File, PRTTIMESPEC pAccessTime, PRTTIMESPEC pModificationTime,
+                           PRTTIMESPEC pChangeTime, PRTTIMESPEC pBirthTime);
+RTDECL(int) EFFileGetTimes(RTFILE File, PRTTIMESPEC pAccessTime, PRTTIMESPEC pModificationTime,
                            PRTTIMESPEC pChangeTime, PRTTIMESPEC pBirthTime);
 
 /**

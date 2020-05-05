@@ -208,7 +208,7 @@ File::File(Mode aMode, const char *aFileName, bool aFlushIt /* = false */)
             break;
     }
 
-    int vrc = RTFileOpen(&m->handle, aFileName, flags);
+    int vrc = EFFileOpen(&m->handle, aFileName, flags);
     if (RT_FAILURE(vrc))
         throw EIPRTFailure(vrc, "Runtime error opening '%s' for %s", aFileName, pcszMode);
 
@@ -236,13 +236,13 @@ File::~File()
 {
     if (m->flushOnClose)
     {
-        RTFileFlush(m->handle);
-        if (!m->strFileName.isEmpty())
-            RTDirFlushParent(m->strFileName.c_str());
+        EFFileFlush(m->handle);
+        //if (!m->strFileName.isEmpty())
+        //    EFDirFlushParent(m->strFileName.c_str());
     }
 
     if (m->opened)
-        RTFileClose(m->handle);
+        EFFileClose(m->handle);
     delete m;
 }
 
@@ -254,7 +254,7 @@ const char *File::uri() const
 uint64_t File::pos() const
 {
     uint64_t p = 0;
-    int vrc = RTFileSeek(m->handle, 0, RTFILE_SEEK_CURRENT, &p);
+    int vrc = EFFileSeek(m->handle, 0, RTFILE_SEEK_CURRENT, &p);
     if (RT_SUCCESS(vrc))
         return p;
 
@@ -270,13 +270,13 @@ void File::setPos(uint64_t aPos)
     /* check if we overflow int64_t and move to INT64_MAX first */
     if ((int64_t)aPos < 0)
     {
-        vrc = RTFileSeek(m->handle, INT64_MAX, method, &p);
+        vrc = EFFileSeek(m->handle, INT64_MAX, method, &p);
         aPos -= (uint64_t)INT64_MAX;
         method = RTFILE_SEEK_CURRENT;
     }
     /* seek the rest */
     if (RT_SUCCESS(vrc))
-        vrc = RTFileSeek(m->handle, (int64_t) aPos, method, &p);
+        vrc = EFFileSeek(m->handle, (int64_t) aPos, method, &p);
     if (RT_SUCCESS(vrc))
         return;
 
@@ -286,7 +286,7 @@ void File::setPos(uint64_t aPos)
 int File::read(char *aBuf, int aLen)
 {
     size_t len = aLen;
-    int vrc = RTFileRead(m->handle, aBuf, len, &len);
+    int vrc = EFFileRead(m->handle, aBuf, len, &len);
     if (RT_SUCCESS(vrc))
         return (int)len;
 
@@ -296,7 +296,7 @@ int File::read(char *aBuf, int aLen)
 int File::write(const char *aBuf, int aLen)
 {
     size_t len = aLen;
-    int vrc = RTFileWrite(m->handle, aBuf, len, &len);
+    int vrc = EFFileWrite(m->handle, aBuf, len, &len);
     if (RT_SUCCESS(vrc))
         return (int)len;
 
@@ -305,7 +305,7 @@ int File::write(const char *aBuf, int aLen)
 
 void File::truncate()
 {
-    int vrc = RTFileSetSize(m->handle, pos());
+    int vrc = EFFileSetSize(m->handle, pos());
     if (RT_SUCCESS(vrc))
         return;
 
@@ -1992,19 +1992,20 @@ void XmlFileWriter::write(const char *pcszFilename, bool fSafe)
 
         /* Make a backup of any existing file (ignore failure). */
         uint64_t cbPrevFile;
-        rc = RTFileQuerySize(pcszFilename, &cbPrevFile);
+        rc = EFFileQuerySize(pcszFilename, &cbPrevFile);
         if (RT_SUCCESS(rc) && cbPrevFile >= 16)
-            RTFileRename(pcszFilename, szPrevFilename, RTPATHRENAME_FLAGS_REPLACE);
+            EFFileRename(pcszFilename, szPrevFilename, RTPATHRENAME_FLAGS_REPLACE);
 
         /* Commit the temporary file. Just leave the tmp file behind on failure. */
-        rc = RTFileRename(szTmpFilename, pcszFilename, RTPATHRENAME_FLAGS_REPLACE);
+        rc = EFFileRename(szTmpFilename, pcszFilename, RTPATHRENAME_FLAGS_REPLACE);
         if (RT_FAILURE(rc))
             throw EIPRTFailure(rc, "Failed to replace '%s' with '%s'", pcszFilename, szTmpFilename);
-
+#if 0
         /* Flush the directory changes (required on linux at least). */
         RTPathStripFilename(szTmpFilename);
         rc = RTDirFlush(szTmpFilename);
         AssertMsg(RT_SUCCESS(rc) || rc == VERR_NOT_SUPPORTED || rc == VERR_NOT_IMPLEMENTED, ("%Rrc\n", rc));
+#endif
     }
 }
 
