@@ -32,6 +32,7 @@
 
 #include "VDBackends.h"
 
+
 #define VDI_IMAGE_DEFAULT_BLOCK_SIZE _1M
 
 /** Macros for endianess conversion. */

@@ -781,6 +781,43 @@ RTDECL(int) RTFileModeToFlagsEx(const char *pszAccess, const char *pszDispositio
 RTDECL(int) RTFileMove(const char *pszSrc, const char *pszDst, unsigned fMove);
 RTDECL(int) EFFileMove(const char *pszSrc, const char *pszDst, unsigned fMove);
 
+/**
+ * Query the sizes of a filesystem.
+ *
+ * @returns iprt status code.
+ * @param   pszFsPath       Path within the mounted filesystem.
+ * @param   pcbTotal        Where to store the total filesystem space. (Optional)
+ * @param   pcbFree         Where to store the remaining free space in the filesystem. (Optional)
+ * @param   pcbBlock        Where to store the block size. (Optional)
+ * @param   pcbSector       Where to store the sector size. (Optional)
+ *
+ * @sa      EFFileQueryFsSizes
+ */
+RTR3DECL(int) EFFsQuerySizes(const char *pszFsPath, PRTFOFF pcbTotal, RTFOFF *pcbFree,
+                             uint32_t *pcbBlock, uint32_t *pcbSector);
+
+/**
+ * Query information about a file system object.
+ *
+ * This API will resolve NOT symbolic links in the last component (just like
+ * unix lstat()).
+ *
+ * @returns IPRT status code.
+ * @retval  VINF_SUCCESS if the object exists, information returned.
+ * @retval  VERR_PATH_NOT_FOUND if any but the last component in the specified
+ *          path was not found or was not a directory.
+ * @retval  VERR_FILE_NOT_FOUND if the object does not exist (but path to the
+ *          parent directory exists).
+ *
+ * @param   pszPath     Path to the file system object.
+ * @param   pObjInfo    Object information structure to be filled on successful
+ *                      return.
+ * @param   enmAdditionalAttribs
+ *                      Which set of additional attributes to request.
+ *                      Use RTFSOBJATTRADD_NOTHING if this doesn't matter.
+ */
+RTR3DECL(int) EFPathQueryInfo(const char *pszPath, PRTFSOBJINFO pObjInfo, RTFSOBJATTRADD enmAdditionalAttribs);
+
 
 /**
  * Creates a new file with a unique name using the given template.

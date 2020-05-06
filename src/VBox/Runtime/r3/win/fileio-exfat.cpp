@@ -40,14 +40,8 @@ static struct exfat * ef = NULL;
 static void init_exfatfs(void)
 {
     if(ef==NULL){
-        ef = (struct exfat *)malloc(sizeof(struct exfat));
-        if(exfat_mount(ef,"D:\\Code\\exfat_forwin\\win\\exfatDlg\\fhaha.img","rw")){
-            free(ef);
-            ef=NULL;
-        }
-        else{
-            set_dllexfat(ef);
-        }
+        ef = get_ef();
+        
     }
 }
 
@@ -527,6 +521,231 @@ RTFILE efFileGetStandard(RTHANDLESTD enmStdHandle)
     return NIL_RTFILE;
 }
 
+RTR3DECL(int) EFPathQueryInfoEx(const char *pszPath, PRTFSOBJINFO pObjInfo, RTFSOBJATTRADD enmAdditionalAttribs, uint32_t fFlags)
+{
+    /*
+     * Validate input.
+     */
+    AssertPtrReturn(pszPath, VERR_INVALID_POINTER);
+    AssertReturn(*pszPath, VERR_INVALID_PARAMETER);
+    AssertPtrReturn(pObjInfo, VERR_INVALID_POINTER);
+    AssertMsgReturn(    enmAdditionalAttribs >= RTFSOBJATTRADD_NOTHING
+                    &&  enmAdditionalAttribs <= RTFSOBJATTRADD_LAST,
+                    ("Invalid enmAdditionalAttribs=%p\n", enmAdditionalAttribs),
+                    VERR_INVALID_PARAMETER);
+    AssertMsgReturn(RTPATH_F_IS_VALID(fFlags, 0), ("%#x\n", fFlags), VERR_INVALID_PARAMETER);
+
+    /*
+     * Query file info.
+     */
+    WIN32_FILE_ATTRIBUTE_DATA Data;
+    PRTUTF16 pwszPath;
+    int rc = RTStrToUtf16(pszPath, &pwszPath);
+    if (RT_FAILURE(rc))
+        return rc;
+    if (!GetFileAttributesExW(pwszPath, GetFileExInfoStandard, &Data))
+    {
+        /* Fallback to FindFileFirst in case of sharing violation. */
+        if (GetLastError() == ERROR_SHARING_VIOLATION)
+        {
+            WIN32_FIND_DATAW FindData;
+            HANDLE hDir = FindFirstFileW(pwszPath, &FindData);
+            if (hDir == INVALID_HANDLE_VALUE)
+            {
+                rc = RTErrConvertFromWin32(GetLastError());
+                RTUtf16Free(pwszPath);
+                return rc;
+            }
+            FindClose(hDir);
+
+            Data.dwFileAttributes   = FindData.dwFileAttributes;
+            Data.ftCreationTime     = FindData.ftCreationTime;
+            Data.ftLastAccessTime   = FindData.ftLastAccessTime;
+            Data.ftLastWriteTime    = FindData.ftLastWriteTime;
+            Data.nFileSizeHigh      = FindData.nFileSizeHigh;
+            Data.nFileSizeLow       = FindData.nFileSizeLow;
+        }
+        else
+        {
+            rc = RTErrConvertFromWin32(GetLastError());
+            RTUtf16Free(pwszPath);
+            return rc;
+        }
+    }
+
+    /*
+     * Getting the information for the link target is a bit annoying and
+     * subject to the same access violation mess as above.. :/
+     */
+    /** @todo we're too lazy wrt to error paths here... */
+    if (   (fFlags & RTPATH_F_FOLLOW_LINK)
+        && (Data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT))
+    {
+        HANDLE hFinal = CreateFileW(pwszPath,
+                                    GENERIC_READ,
+                                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                    NULL,
+                                    OPEN_EXISTING,
+                                    FILE_FLAG_BACKUP_SEMANTICS,
+                                    NULL);
+        if (hFinal != INVALID_HANDLE_VALUE)
+        {
+            BY_HANDLE_FILE_INFORMATION FileData;
+            if (GetFileInformationByHandle(hFinal, &FileData))
+            {
+                Data.dwFileAttributes   = FileData.dwFileAttributes;
+                Data.ftCreationTime     = FileData.ftCreationTime;
+                Data.ftLastAccessTime   = FileData.ftLastAccessTime;
+                Data.ftLastWriteTime    = FileData.ftLastWriteTime;
+                Data.nFileSizeHigh      = FileData.nFileSizeHigh;
+                Data.nFileSizeLow       = FileData.nFileSizeLow;
+            }
+            CloseHandle(hFinal);
+        }
+        else if (GetLastError() != ERROR_SHARING_VIOLATION)
+        {
+            rc = RTErrConvertFromWin32(GetLastError());
+            RTUtf16Free(pwszPath);
+            return rc;
+        }
+    }
+
+    RTUtf16Free(pwszPath);
+
+    /*
+     * Setup the returned data.
+     */
+    pObjInfo->cbObject    = ((uint64_t)Data.nFileSizeHigh << 32)
+                          |  (uint64_t)Data.nFileSizeLow;
+    pObjInfo->cbAllocated = pObjInfo->cbObject;
+
+    Assert(sizeof(uint64_t) == sizeof(Data.ftCreationTime));
+    RTTimeSpecSetNtTime(&pObjInfo->BirthTime,         *(uint64_t *)&Data.ftCreationTime);
+    RTTimeSpecSetNtTime(&pObjInfo->AccessTime,        *(uint64_t *)&Data.ftLastAccessTime);
+    RTTimeSpecSetNtTime(&pObjInfo->ModificationTime,  *(uint64_t *)&Data.ftLastWriteTime);
+    pObjInfo->ChangeTime  = pObjInfo->ModificationTime;
+
+    pObjInfo->Attr.fMode  = rtFsModeFromDos((Data.dwFileAttributes << RTFS_DOS_SHIFT) & RTFS_DOS_MASK_NT,
+                                            pszPath, strlen(pszPath));
+
+    /*
+     * Requested attributes (we cannot provide anything actually).
+     */
+    switch (enmAdditionalAttribs)
+    {
+        case RTFSOBJATTRADD_NOTHING:
+            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_NOTHING;
+            break;
+
+        case RTFSOBJATTRADD_UNIX:
+            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_UNIX;
+            pObjInfo->Attr.u.Unix.uid             = ~0U;
+            pObjInfo->Attr.u.Unix.gid             = ~0U;
+            pObjInfo->Attr.u.Unix.cHardlinks      = 1;
+            pObjInfo->Attr.u.Unix.INodeIdDevice   = 0; /** @todo use volume serial number */
+            pObjInfo->Attr.u.Unix.INodeId         = 0; /** @todo use fileid (see GetFileInformationByHandle). */
+            pObjInfo->Attr.u.Unix.fFlags          = 0;
+            pObjInfo->Attr.u.Unix.GenerationId    = 0;
+            pObjInfo->Attr.u.Unix.Device          = 0;
+            break;
+
+        case RTFSOBJATTRADD_UNIX_OWNER:
+            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_UNIX_OWNER;
+            pObjInfo->Attr.u.UnixOwner.uid        = ~0U;
+            pObjInfo->Attr.u.UnixOwner.szName[0]  = '\0'; /** @todo return something sensible here. */
+            break;
+
+        case RTFSOBJATTRADD_UNIX_GROUP:
+            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_UNIX_GROUP;
+            pObjInfo->Attr.u.UnixGroup.gid        = ~0U;
+            pObjInfo->Attr.u.UnixGroup.szName[0]  = '\0';
+            break;
+
+        case RTFSOBJATTRADD_EASIZE:
+            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_EASIZE;
+            pObjInfo->Attr.u.EASize.cb            = 0;
+            break;
+
+        default:
+            AssertMsgFailed(("Impossible!\n"));
+            return VERR_INTERNAL_ERROR;
+    }
+
+    return VINF_SUCCESS;
+}
+
+RTR3DECL(int) EFPathQueryInfo(const char *pszPath, PRTFSOBJINFO pObjInfo, RTFSOBJATTRADD enmAdditionalAttribs)
+{
+    return RTPathQueryInfoEx(pszPath, pObjInfo, enmAdditionalAttribs, RTPATH_F_ON_LINK);
+}
+
+RTR3DECL(int) EFFsQuerySizes(const char *pszFsPath, RTFOFF *pcbTotal, RTFOFF *pcbFree,
+                             uint32_t *pcbBlock, uint32_t *pcbSector)
+{
+    /*
+     * Validate & get valid root path.
+     */
+    AssertMsgReturn(VALID_PTR(pszFsPath) && *pszFsPath, ("%p", pszFsPath), VERR_INVALID_PARAMETER);
+    int rc = VINF_SUCCESS;
+ #if 0
+    PRTUTF16 pwszFsRoot;
+    int rc = rtFsGetRoot(pszFsPath, &pwszFsRoot);
+    if (RT_FAILURE(rc))
+        return rc;
+
+    /*
+     * Free and total.
+     */
+    if (pcbTotal || pcbFree)
+    {
+        ULARGE_INTEGER cbTotal;
+        ULARGE_INTEGER cbFree;
+        if (GetDiskFreeSpaceExW(pwszFsRoot, &cbFree, &cbTotal, NULL))
+        {
+            if (pcbTotal)
+                *pcbTotal = cbTotal.QuadPart;
+            if (pcbFree)
+                *pcbFree  = cbFree.QuadPart;
+        }
+        else
+        {
+            DWORD Err = GetLastError();
+            rc = RTErrConvertFromWin32(Err);
+            Log(("RTFsQuerySizes(%s,): GetDiskFreeSpaceEx failed with lasterr %d (%Rrc)\n",
+                 pszFsPath, Err, rc));
+        }
+    }
+
+    /*
+     * Block and sector size.
+     */
+    if (    RT_SUCCESS(rc)
+        &&  (pcbBlock || pcbSector))
+    {
+        DWORD dwDummy1, dwDummy2;
+        DWORD cbSector;
+        DWORD cSectorsPerCluster;
+        if (GetDiskFreeSpaceW(pwszFsRoot, &cSectorsPerCluster, &cbSector, &dwDummy1, &dwDummy2))
+        {
+            if (pcbBlock)
+                *pcbBlock = cbSector * cSectorsPerCluster;
+            if (pcbSector)
+                *pcbSector = cbSector;
+        }
+        else
+        {
+            DWORD Err = GetLastError();
+            rc = RTErrConvertFromWin32(Err);
+            Log(("RTFsQuerySizes(%s,): GetDiskFreeSpace failed with lasterr %d (%Rrc)\n",
+                 pszFsPath, Err, rc));
+        }
+    }
+
+    rtFsFreeRoot(pwszFsRoot);
+#endif
+    return rc;
+}
+
 
 RTR3DECL(int) EFFileSeek(RTFILE hFile, int64_t offSeek, unsigned uMethod, uint64_t *poffActual)
 {
@@ -676,6 +895,46 @@ RTR3DECL(int) EFFileRead(RTFILE hFile, void *pvBuf, size_t cbToRead, size_t *pcb
     
 
     return VINF_SUCCESS;
+}
+
+/**
+ * Write bytes to a file at a given offset.
+ * This function may modify the file position.
+ *
+ * @returns iprt status code.
+ * @param   File        Handle to the file.
+ * @param   off         Where to write.
+ * @param   pvBuf       What to write.
+ * @param   cbToWrite   How much to write.
+ * @param   *pcbWritten How much we actually wrote.
+ *                      If NULL an error will be returned for a partial write.
+ */
+RTR3DECL(int)  EFFileWriteAt(RTFILE File, RTFOFF off, const void *pvBuf, size_t cbToWrite, size_t *pcbWritten)
+{
+    int rc = EFFileSeek(File, off, RTFILE_SEEK_BEGIN, NULL);
+    if (RT_SUCCESS(rc))
+        rc = EFFileWrite(File, pvBuf, cbToWrite, pcbWritten);
+    return rc;
+}
+
+/**
+ * Read bytes from a file at a given offset.
+ * This function may modify the file position.
+ *
+ * @returns iprt status code.
+ * @param   File        Handle to the file.
+ * @param   off         Where to read.
+ * @param   pvBuf       Where to put the bytes we read.
+ * @param   cbToRead    How much to read.
+ * @param   *pcbRead    How much we actually read.
+ *                      If NULL an error will be returned for a partial read.
+ */
+RTR3DECL(int)  EFFileReadAt(RTFILE File, RTFOFF off, void *pvBuf, size_t cbToRead, size_t *pcbRead)
+{
+    int rc = EFFileSeek(File, off, RTFILE_SEEK_BEGIN, NULL);
+    if (RT_SUCCESS(rc))
+        rc = EFFileRead(File, pvBuf, cbToRead, pcbRead);
+    return rc;
 }
 
 

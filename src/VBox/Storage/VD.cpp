@@ -19,6 +19,16 @@
 *   Header Files                                                               *
 *******************************************************************************/
 #define LOG_GROUP LOG_GROUP_VD
+#ifndef _WIN32_WINNT
+# define _WIN32_WINNT 0x0500
+#endif
+#ifndef WIN32
+#define WIN32
+#endif
+extern "C" {
+#include "exfat.h"
+}
+#include <stdlib.h>
 #include <VBox/vd.h>
 #include <VBox/err.h>
 #include <VBox/sup.h>
@@ -3933,7 +3943,13 @@ static int vdIOOpenFallback(void *pvUser, const char *pszLocation,
     pStorage->pfnCompleted = pfnCompleted;
 
     /* Open the file. */
-    int rc = RTFileOpen(&pStorage->File, pszLocation, fOpen);
+    int rc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        rc = RTFileOpen(&pStorage->File, pszLocation, fOpen);
+    }
+    else{
+        rc = EFFileOpen(&pStorage->File,pszLocation,fOpen);
+    }
     if (RT_SUCCESS(rc))
     {
         *ppStorage = pStorage;
@@ -3950,34 +3966,65 @@ static int vdIOOpenFallback(void *pvUser, const char *pszLocation,
 static int vdIOCloseFallback(void *pvUser, void *pvStorage)
 {
     PVDIIOFALLBACKSTORAGE pStorage = (PVDIIOFALLBACKSTORAGE)pvStorage;
-
-    RTFileClose(pStorage->File);
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        RTFileClose(pStorage->File);
+    }
+    else{
+        EFFileClose(pStorage->File);
+    }
     RTMemFree(pStorage);
     return VINF_SUCCESS;
 }
 
 static int vdIODeleteFallback(void *pvUser, const char *pcszFilename)
 {
-    return RTFileDelete(pcszFilename);
+    int vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTFileDelete(pcszFilename);
+    }
+    else{
+        vrc = EFFileDelete(pcszFilename);
+    }
+    return vrc;
 }
 
 static int vdIOMoveFallback(void *pvUser, const char *pcszSrc, const char *pcszDst, unsigned fMove)
 {
-    return RTFileMove(pcszSrc, pcszDst, fMove);
+    int  vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTFileMove(pcszSrc, pcszDst, fMove);
+    }
+    else{
+        vrc = EFFileMove(pcszSrc, pcszDst, fMove);
+    }
+    return vrc;
 }
 
 static int vdIOGetFreeSpaceFallback(void *pvUser, const char *pcszFilename, int64_t *pcbFreeSpace)
 {
-    return RTFsQuerySizes(pcszFilename, NULL, pcbFreeSpace, NULL, NULL);
+    int vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTFsQuerySizes(pcszFilename, NULL, pcbFreeSpace, NULL, NULL);
+    }
+    else{
+        vrc = EFFsQuerySizes(pcszFilename, NULL, pcbFreeSpace, NULL, NULL);
+    }
+    return vrc;
 }
 
 static int vdIOGetModificationTimeFallback(void *pvUser, const char *pcszFilename, PRTTIMESPEC pModificationTime)
 {
     RTFSOBJINFO info;
-    int rc = RTPathQueryInfo(pcszFilename, &info, RTFSOBJATTRADD_NOTHING);
-    if (RT_SUCCESS(rc))
+    int vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTPathQueryInfo(pcszFilename, &info, RTFSOBJATTRADD_NOTHING);
+    }
+    else{
+        vrc = EFPathQueryInfo(pcszFilename, &info, RTFSOBJATTRADD_NOTHING);
+    }
+    if (RT_SUCCESS(vrc))
         *pModificationTime = info.ModificationTime;
-    return rc;
+    return vrc;
 }
 
 /**
@@ -3987,7 +4034,14 @@ static int vdIOGetSizeFallback(void *pvUser, void *pvStorage, uint64_t *pcbSize)
 {
     PVDIIOFALLBACKSTORAGE pStorage = (PVDIIOFALLBACKSTORAGE)pvStorage;
 
-    return RTFileGetSize(pStorage->File, pcbSize);
+    int vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTFileGetSize(pStorage->File, pcbSize);
+    }
+    else{
+        vrc = EFFileGetSize(pStorage->File, pcbSize);
+    }
+    return vrc;
 }
 
 /**
@@ -3997,7 +4051,14 @@ static int vdIOSetSizeFallback(void *pvUser, void *pvStorage, uint64_t cbSize)
 {
     PVDIIOFALLBACKSTORAGE pStorage = (PVDIIOFALLBACKSTORAGE)pvStorage;
 
-    return RTFileSetSize(pStorage->File, cbSize);
+    int vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTFileSetSize(pStorage->File, cbSize);
+    }
+    else{
+        vrc = EFFileSetSize(pStorage->File, cbSize);
+    }
+    return vrc;
 }
 
 /**
@@ -4008,7 +4069,14 @@ static int vdIOWriteSyncFallback(void *pvUser, void *pvStorage, uint64_t uOffset
 {
     PVDIIOFALLBACKSTORAGE pStorage = (PVDIIOFALLBACKSTORAGE)pvStorage;
 
-    return RTFileWriteAt(pStorage->File, uOffset, pvBuf, cbWrite, pcbWritten);
+    int vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTFileWriteAt(pStorage->File, uOffset, pvBuf, cbWrite, pcbWritten);
+    }
+    else{
+        vrc = EFFileWriteAt(pStorage->File, uOffset, pvBuf, cbWrite, pcbWritten);
+    }
+    return vrc;
 }
 
 /**
@@ -4019,7 +4087,14 @@ static int vdIOReadSyncFallback(void *pvUser, void *pvStorage, uint64_t uOffset,
 {
     PVDIIOFALLBACKSTORAGE pStorage = (PVDIIOFALLBACKSTORAGE)pvStorage;
 
-    return RTFileReadAt(pStorage->File, uOffset, pvBuf, cbRead, pcbRead);
+    int vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTFileReadAt(pStorage->File, uOffset, pvBuf, cbRead, pcbRead);
+    }
+    else{
+        vrc = EFFileReadAt(pStorage->File, uOffset, pvBuf, cbRead, pcbRead);
+    }
+    return vrc;
 }
 
 /**
@@ -4029,7 +4104,14 @@ static int vdIOFlushSyncFallback(void *pvUser, void *pvStorage)
 {
     PVDIIOFALLBACKSTORAGE pStorage = (PVDIIOFALLBACKSTORAGE)pvStorage;
 
-    return RTFileFlush(pStorage->File);
+    int vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTFileFlush(pStorage->File);
+    }
+    else{
+        vrc = EFFileFlush(pStorage->File);
+    }
+    return vrc;
 }
 
 /**

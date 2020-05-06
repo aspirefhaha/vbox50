@@ -35,6 +35,9 @@ if !defined(VBOX_ONLY_EXTPACKS)
 
  StorageLib_TEMPLATE = VBOXR3
  StorageLib_DEFS     = IN_VBOXDDU
+ if1of ($(KBUILD_TARGET),win)
+ StorageLib_INCS  += D:/Code/exfat_forwin/libexfat
+ endif
  StorageLib_SOURCES  = \
 	VD.cpp \
 	VDVfs.cpp \
