@@ -82,7 +82,7 @@
 #endif
 
 #include "VBox/com/MultiResult.h"
-
+#include <stdlib.h>
 #include <algorithm>
 
 #ifdef VBOX_WITH_DTRACE_R3_MAIN
@@ -625,7 +625,12 @@ HRESULT Machine::initImpl(VirtualBox *aParent,
 
     /* get the full file name */
     int vrc1 = mParent->i_calculateFullPath(strConfigFile, mData->m_strConfigFileFull);
-	 mData->m_strConfigFileFull = strConfigFile;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+	    
+    }
+    else{
+        mData->m_strConfigFileFull = strConfigFile;
+    }
     if (RT_FAILURE(vrc1))
         return setError(VBOX_E_FILE_ERROR,
                         tr("Invalid machine settings file name '%s' (%Rrc)"),

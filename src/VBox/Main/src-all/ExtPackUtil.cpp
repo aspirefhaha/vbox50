@@ -35,7 +35,7 @@
 #include <iprt/cpp/xml.h>
 
 #include <VBox/log.h>
-
+#include <stdlib.h>
 
 /**
  * Worker for VBoxExtPackLoadDesc that loads the plug-in descriptors.
@@ -250,7 +250,12 @@ RTCString *VBoxExtPackLoadDesc(const char *a_pszDir, PVBOXEXTPACKDESC a_pExtPack
     xml::Document       Doc;
     {
         xml::XmlFileParser  Parser;
-		RTPathJoin(szFilePath,sizeof(szFilePath),"/",VBOX_EXTPACK_DESCRIPTION_NAME);
+        if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+		    
+        }
+        else{
+            RTPathJoin(szFilePath,sizeof(szFilePath),"/",VBOX_EXTPACK_DESCRIPTION_NAME);
+        }
         try
         {
             Parser.read(szFilePath, Doc);

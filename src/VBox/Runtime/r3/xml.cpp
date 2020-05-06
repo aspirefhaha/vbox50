@@ -46,6 +46,7 @@
 #include <libxml/xmlschemas.h>
 
 #include <map>
+#include <stdlib.h>
 
 
 /*******************************************************************************
@@ -207,8 +208,13 @@ File::File(Mode aMode, const char *aFileName, bool aFlushIt /* = false */)
             pcszMode = "reading/writing";
             break;
     }
-
-    int vrc = EFFileOpen(&m->handle, aFileName, flags);
+    int vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTFileOpen(&m->handle, aFileName, flags);
+    }
+    else{
+        vrc = EFFileOpen(&m->handle, aFileName, flags);
+    }
     if (RT_FAILURE(vrc))
         throw EIPRTFailure(vrc, "Runtime error opening '%s' for %s", aFileName, pcszMode);
 
@@ -236,13 +242,23 @@ File::~File()
 {
     if (m->flushOnClose)
     {
-        EFFileFlush(m->handle);
-        //if (!m->strFileName.isEmpty())
-        //    EFDirFlushParent(m->strFileName.c_str());
+        if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+            RTFileFlush(m->handle);
+            if (!m->strFileName.isEmpty())
+                RTDirFlushParent(m->strFileName.c_str()); 
+        }
+        else{
+            EFFileFlush(m->handle);
+        }
     }
 
-    if (m->opened)
-        EFFileClose(m->handle);
+    if (m->opened){
+        if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+            RTFileClose(m->handle);
+        }
+        else
+            EFFileClose(m->handle);
+    }
     delete m;
 }
 
@@ -254,7 +270,13 @@ const char *File::uri() const
 uint64_t File::pos() const
 {
     uint64_t p = 0;
-    int vrc = EFFileSeek(m->handle, 0, RTFILE_SEEK_CURRENT, &p);
+    int vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTFileSeek(m->handle, 0, RTFILE_SEEK_CURRENT, &p);
+    }
+    else{
+        vrc = EFFileSeek(m->handle, 0, RTFILE_SEEK_CURRENT, &p);
+    }
     if (RT_SUCCESS(vrc))
         return p;
 
@@ -270,13 +292,25 @@ void File::setPos(uint64_t aPos)
     /* check if we overflow int64_t and move to INT64_MAX first */
     if ((int64_t)aPos < 0)
     {
-        vrc = EFFileSeek(m->handle, INT64_MAX, method, &p);
+        if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+            vrc = RTFileSeek(m->handle, INT64_MAX, method, &p);
+        }
+        else{
+            vrc = EFFileSeek(m->handle, INT64_MAX, method, &p);
+        }
         aPos -= (uint64_t)INT64_MAX;
         method = RTFILE_SEEK_CURRENT;
     }
     /* seek the rest */
-    if (RT_SUCCESS(vrc))
-        vrc = EFFileSeek(m->handle, (int64_t) aPos, method, &p);
+    if (RT_SUCCESS(vrc)){
+        if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+            vrc = RTFileSeek(m->handle, (int64_t) aPos, method, &p);
+        }
+        else{
+            vrc = EFFileSeek(m->handle, (int64_t) aPos, method, &p);
+        }
+    }
+        
     if (RT_SUCCESS(vrc))
         return;
 
@@ -286,7 +320,13 @@ void File::setPos(uint64_t aPos)
 int File::read(char *aBuf, int aLen)
 {
     size_t len = aLen;
-    int vrc = EFFileRead(m->handle, aBuf, len, &len);
+    int vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTFileRead(m->handle, aBuf, len, &len);
+    }
+    else{
+        vrc = EFFileRead(m->handle, aBuf, len, &len);
+    }
     if (RT_SUCCESS(vrc))
         return (int)len;
 
@@ -296,7 +336,13 @@ int File::read(char *aBuf, int aLen)
 int File::write(const char *aBuf, int aLen)
 {
     size_t len = aLen;
-    int vrc = EFFileWrite(m->handle, aBuf, len, &len);
+    int vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTFileWrite(m->handle, aBuf, len, &len);
+    }
+    else{
+        vrc = EFFileWrite(m->handle, aBuf, len, &len);
+    }
     if (RT_SUCCESS(vrc))
         return (int)len;
 
@@ -305,7 +351,14 @@ int File::write(const char *aBuf, int aLen)
 
 void File::truncate()
 {
-    int vrc = EFFileSetSize(m->handle, pos());
+    int vrc = VINF_SUCCESS;
+    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+        vrc = RTFileSetSize(m->handle, pos());
+    }
+    else{
+        vrc = EFFileSetSize(m->handle, pos());
+    }
+    
     if (RT_SUCCESS(vrc))
         return;
 
@@ -1992,20 +2045,20 @@ void XmlFileWriter::write(const char *pcszFilename, bool fSafe)
 
         /* Make a backup of any existing file (ignore failure). */
         uint64_t cbPrevFile;
-        rc = EFFileQuerySize(pcszFilename, &cbPrevFile);
+        rc = RTFileQuerySize(pcszFilename, &cbPrevFile);
         if (RT_SUCCESS(rc) && cbPrevFile >= 16)
-            EFFileRename(pcszFilename, szPrevFilename, RTPATHRENAME_FLAGS_REPLACE);
+            RTFileRename(pcszFilename, szPrevFilename, RTPATHRENAME_FLAGS_REPLACE);
 
         /* Commit the temporary file. Just leave the tmp file behind on failure. */
-        rc = EFFileRename(szTmpFilename, pcszFilename, RTPATHRENAME_FLAGS_REPLACE);
+        rc = RTFileRename(szTmpFilename, pcszFilename, RTPATHRENAME_FLAGS_REPLACE);
         if (RT_FAILURE(rc))
             throw EIPRTFailure(rc, "Failed to replace '%s' with '%s'", pcszFilename, szTmpFilename);
-#if 0
+
         /* Flush the directory changes (required on linux at least). */
         RTPathStripFilename(szTmpFilename);
         rc = RTDirFlush(szTmpFilename);
         AssertMsg(RT_SUCCESS(rc) || rc == VERR_NOT_SUPPORTED || rc == VERR_NOT_IMPLEMENTED, ("%Rrc\n", rc));
-#endif
+
     }
 }
 
