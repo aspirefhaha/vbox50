@@ -889,13 +889,20 @@ RTR3DECL(int) EFFileWrite(RTFILE hFile, const void *pvBuf, size_t cbToWrite, siz
 
 RTR3DECL(int) EFFileFlush(RTFILE hFile)
 {
+#if 0
     if (!FlushFileBuffers((HANDLE)RTFileToNative(hFile)))
     {
         int rc = GetLastError();
         Log(("FlushFileBuffers failed with %d\n", rc));
         return RTErrConvertFromWin32(rc);
     }
-    return VINF_SUCCESS;
+#endif
+    struct exfat_node * pnode = (struct exfat_node*)hFile;
+    int rc = exfat_flush_node(ef,pnode);
+    if(rc == 0){
+        return VINF_SUCCESS;
+    }
+    return VERR_INVALID_HANDLE;
 }
 
 

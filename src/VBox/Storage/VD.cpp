@@ -29,6 +29,7 @@ extern "C" {
 #include "exfat.h"
 }
 #include <stdlib.h>
+#include <ctype.h>
 #include <VBox/vd.h>
 #include <VBox/err.h>
 #include <VBox/sup.h>
@@ -3928,6 +3929,44 @@ out:
 #endif
 }
 
+static bool sCheckVDI(PVBOXHDD phdd,char * pszLocation)
+{
+    PVDIMAGE pBase = phdd->pBase;
+	char * dotpos = NULL;
+	if(pBase){
+		dotpos = strrchr(pBase->pszFilename,'.');
+		if(dotpos){
+			char tmpext[32]={0};
+			size_t leftlen = strlen(dotpos);
+			strcpy(tmpext,dotpos);
+			for(int i = 0;i<leftlen;i++){
+				tmpext[i] = tolower(tmpext[i]);
+			}
+			if(strcmp(tmpext,".vdi")==0){
+				return true;
+			}
+		}
+	}
+	else if(pszLocation){
+		dotpos = strrchr((char *)pszLocation,'.');
+		if(dotpos){
+			char tmpext[32]={0};
+			size_t leftlen = strlen(dotpos);
+			strcpy(tmpext,dotpos);
+			for(int i = 0;i<leftlen;i++){
+				tmpext[i] = tolower(tmpext[i]);
+			}
+			if(strcmp(tmpext,".vdi")==0){
+				return true;
+			}
+		}
+	}
+
+	if(phdd->enmType == VDTYPE_HDD)
+		return true;
+	return false;
+}
+
 /**
  * VD async I/O interface open callback.
  */
@@ -3944,11 +3983,14 @@ static int vdIOOpenFallback(void *pvUser, const char *pszLocation,
 
     /* Open the file. */
     int rc = VINF_SUCCESS;
-    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+    PVBOXHDD phdd = (PVBOXHDD)pvUser;
+	bool isVDIFile =  sCheckVDI(phdd,(char *)pszLocation);
+  
+    if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0) || !isVDIFile){
         rc = RTFileOpen(&pStorage->File, pszLocation, fOpen);
     }
     else{
-        rc = EFFileOpen(&pStorage->File,pszLocation,fOpen);
+		rc = EFFileOpen(&pStorage->File,pszLocation,fOpen);
     }
     if (RT_SUCCESS(rc))
     {
@@ -3966,7 +4008,10 @@ static int vdIOOpenFallback(void *pvUser, const char *pszLocation,
 static int vdIOCloseFallback(void *pvUser, void *pvStorage)
 {
     PVDIIOFALLBACKSTORAGE pStorage = (PVDIIOFALLBACKSTORAGE)pvStorage;
-    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+	PVBOXHDD phdd = (PVBOXHDD)pvUser;
+    bool isVDIFile =  sCheckVDI(phdd,NULL);
+  
+    if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0) || !isVDIFile){
         RTFileClose(pStorage->File);
     }
     else{
@@ -3979,7 +4024,9 @@ static int vdIOCloseFallback(void *pvUser, void *pvStorage)
 static int vdIODeleteFallback(void *pvUser, const char *pcszFilename)
 {
     int vrc = VINF_SUCCESS;
-    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+    bool isVDIFile =  sCheckVDI((PVBOXHDD)pvUser,(char *)pcszFilename);
+  
+    if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0) || !isVDIFile){
         vrc = RTFileDelete(pcszFilename);
     }
     else{
@@ -3991,7 +4038,9 @@ static int vdIODeleteFallback(void *pvUser, const char *pcszFilename)
 static int vdIOMoveFallback(void *pvUser, const char *pcszSrc, const char *pcszDst, unsigned fMove)
 {
     int  vrc = VINF_SUCCESS;
-    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+    bool isVDIFile =  sCheckVDI((PVBOXHDD)pvUser,(char *)pcszSrc);
+  
+    if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0) || !isVDIFile){
         vrc = RTFileMove(pcszSrc, pcszDst, fMove);
     }
     else{
@@ -4003,7 +4052,9 @@ static int vdIOMoveFallback(void *pvUser, const char *pcszSrc, const char *pcszD
 static int vdIOGetFreeSpaceFallback(void *pvUser, const char *pcszFilename, int64_t *pcbFreeSpace)
 {
     int vrc = VINF_SUCCESS;
-    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+    bool isVDIFile =  sCheckVDI((PVBOXHDD)pvUser,(char *)pcszFilename);
+  
+    if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0) || !isVDIFile){
         vrc = RTFsQuerySizes(pcszFilename, NULL, pcbFreeSpace, NULL, NULL);
     }
     else{
@@ -4016,7 +4067,9 @@ static int vdIOGetModificationTimeFallback(void *pvUser, const char *pcszFilenam
 {
     RTFSOBJINFO info;
     int vrc = VINF_SUCCESS;
-    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+    bool isVDIFile =  sCheckVDI((PVBOXHDD)pvUser,(char *)pcszFilename);
+  
+    if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0) || !isVDIFile){
         vrc = RTPathQueryInfo(pcszFilename, &info, RTFSOBJATTRADD_NOTHING);
     }
     else{
@@ -4035,7 +4088,9 @@ static int vdIOGetSizeFallback(void *pvUser, void *pvStorage, uint64_t *pcbSize)
     PVDIIOFALLBACKSTORAGE pStorage = (PVDIIOFALLBACKSTORAGE)pvStorage;
 
     int vrc = VINF_SUCCESS;
-    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+    bool isVDIFile =  sCheckVDI((PVBOXHDD)pvUser,NULL);
+  
+    if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0) || !isVDIFile){
         vrc = RTFileGetSize(pStorage->File, pcbSize);
     }
     else{
@@ -4052,7 +4107,9 @@ static int vdIOSetSizeFallback(void *pvUser, void *pvStorage, uint64_t cbSize)
     PVDIIOFALLBACKSTORAGE pStorage = (PVDIIOFALLBACKSTORAGE)pvStorage;
 
     int vrc = VINF_SUCCESS;
-    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+    bool isVDIFile =  sCheckVDI((PVBOXHDD)pvUser,NULL);
+  
+    if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0) || !isVDIFile){
         vrc = RTFileSetSize(pStorage->File, cbSize);
     }
     else{
@@ -4070,7 +4127,9 @@ static int vdIOWriteSyncFallback(void *pvUser, void *pvStorage, uint64_t uOffset
     PVDIIOFALLBACKSTORAGE pStorage = (PVDIIOFALLBACKSTORAGE)pvStorage;
 
     int vrc = VINF_SUCCESS;
-    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+    bool isVDIFile =  sCheckVDI((PVBOXHDD)pvUser,NULL);
+  
+    if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0) || !isVDIFile){
         vrc = RTFileWriteAt(pStorage->File, uOffset, pvBuf, cbWrite, pcbWritten);
     }
     else{
@@ -4088,7 +4147,9 @@ static int vdIOReadSyncFallback(void *pvUser, void *pvStorage, uint64_t uOffset,
     PVDIIOFALLBACKSTORAGE pStorage = (PVDIIOFALLBACKSTORAGE)pvStorage;
 
     int vrc = VINF_SUCCESS;
-    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+    bool isVDIFile =  sCheckVDI((PVBOXHDD)pvUser,NULL);
+  
+    if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0) || !isVDIFile){
         vrc = RTFileReadAt(pStorage->File, uOffset, pvBuf, cbRead, pcbRead);
     }
     else{
@@ -4105,7 +4166,9 @@ static int vdIOFlushSyncFallback(void *pvUser, void *pvStorage)
     PVDIIOFALLBACKSTORAGE pStorage = (PVDIIOFALLBACKSTORAGE)pvStorage;
 
     int vrc = VINF_SUCCESS;
-    if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+    bool isVDIFile =  sCheckVDI((PVBOXHDD)pvUser,NULL);
+  
+    if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0) || !isVDIFile){
         vrc = RTFileFlush(pStorage->File);
     }
     else{
