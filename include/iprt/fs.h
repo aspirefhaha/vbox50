@@ -255,6 +255,9 @@ typedef enum RTFSTYPE
     /** Journaled File System (v2).  */
     RTFSTYPE_JFS,
 
+    /* XDisk exfat */
+    RTFSTYPE_XDISK,
+
     /** The end of valid Filesystem types IDs. */
     RTFSTYPE_END,
     /** The usual 32-bit type blow up. */

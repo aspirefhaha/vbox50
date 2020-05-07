@@ -19,6 +19,16 @@
 *   Header Files                                                               *
 *******************************************************************************/
 #define LOG_GROUP LOG_GROUP_VD_VDI
+#ifndef _WIN32_WINNT
+# define _WIN32_WINNT 0x0500
+#endif
+#ifndef WIN32
+#define WIN32
+#endif
+extern "C" {
+#include "exfat.h"
+}
+#include <stdlib.h>
 #include <VBox/vd-plugin.h>
 #include "VDICore.h"
 #include <VBox/err.h>

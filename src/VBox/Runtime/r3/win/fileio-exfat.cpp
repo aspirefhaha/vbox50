@@ -538,138 +538,28 @@ RTR3DECL(int) EFPathQueryInfoEx(const char *pszPath, PRTFSOBJINFO pObjInfo, RTFS
     /*
      * Query file info.
      */
-    WIN32_FILE_ATTRIBUTE_DATA Data;
-    PRTUTF16 pwszPath;
-    int rc = RTStrToUtf16(pszPath, &pwszPath);
-    if (RT_FAILURE(rc))
-        return rc;
-    if (!GetFileAttributesExW(pwszPath, GetFileExInfoStandard, &Data))
-    {
-        /* Fallback to FindFileFirst in case of sharing violation. */
-        if (GetLastError() == ERROR_SHARING_VIOLATION)
-        {
-            WIN32_FIND_DATAW FindData;
-            HANDLE hDir = FindFirstFileW(pwszPath, &FindData);
-            if (hDir == INVALID_HANDLE_VALUE)
-            {
-                rc = RTErrConvertFromWin32(GetLastError());
-                RTUtf16Free(pwszPath);
-                return rc;
-            }
-            FindClose(hDir);
-
-            Data.dwFileAttributes   = FindData.dwFileAttributes;
-            Data.ftCreationTime     = FindData.ftCreationTime;
-            Data.ftLastAccessTime   = FindData.ftLastAccessTime;
-            Data.ftLastWriteTime    = FindData.ftLastWriteTime;
-            Data.nFileSizeHigh      = FindData.nFileSizeHigh;
-            Data.nFileSizeLow       = FindData.nFileSizeLow;
-        }
-        else
-        {
-            rc = RTErrConvertFromWin32(GetLastError());
-            RTUtf16Free(pwszPath);
-            return rc;
-        }
+    struct exfat_node * pnode ;
+    int vrc = exfat_lookup(ef,&pnode,pszPath);
+    if(vrc != 0){
+        return VERR_INVALID_PARAMETER;
     }
+    //struct stat exfatstat;
+    //exfat_stat(ef,pnode,&exfatstat);
+    pObjInfo->cbObject    = pnode->size;
+    pObjInfo->cbAllocated = ROUND_UP(pnode->size, CLUSTER_SIZE(*ef->sb)) ;
+    //pObjInfo->AccessTime  = pnode->atime;
+    //pObjInfo->BirthTime   = pnode->mtime;
+    //pObjInfo->ModificationTime = pnode->mtime;
+    exfat_put_node(ef,pnode);
+    
 
-    /*
-     * Getting the information for the link target is a bit annoying and
-     * subject to the same access violation mess as above.. :/
-     */
-    /** @todo we're too lazy wrt to error paths here... */
-    if (   (fFlags & RTPATH_F_FOLLOW_LINK)
-        && (Data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT))
-    {
-        HANDLE hFinal = CreateFileW(pwszPath,
-                                    GENERIC_READ,
-                                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                                    NULL,
-                                    OPEN_EXISTING,
-                                    FILE_FLAG_BACKUP_SEMANTICS,
-                                    NULL);
-        if (hFinal != INVALID_HANDLE_VALUE)
-        {
-            BY_HANDLE_FILE_INFORMATION FileData;
-            if (GetFileInformationByHandle(hFinal, &FileData))
-            {
-                Data.dwFileAttributes   = FileData.dwFileAttributes;
-                Data.ftCreationTime     = FileData.ftCreationTime;
-                Data.ftLastAccessTime   = FileData.ftLastAccessTime;
-                Data.ftLastWriteTime    = FileData.ftLastWriteTime;
-                Data.nFileSizeHigh      = FileData.nFileSizeHigh;
-                Data.nFileSizeLow       = FileData.nFileSizeLow;
-            }
-            CloseHandle(hFinal);
-        }
-        else if (GetLastError() != ERROR_SHARING_VIOLATION)
-        {
-            rc = RTErrConvertFromWin32(GetLastError());
-            RTUtf16Free(pwszPath);
-            return rc;
-        }
-    }
-
-    RTUtf16Free(pwszPath);
-
-    /*
-     * Setup the returned data.
-     */
-    pObjInfo->cbObject    = ((uint64_t)Data.nFileSizeHigh << 32)
-                          |  (uint64_t)Data.nFileSizeLow;
-    pObjInfo->cbAllocated = pObjInfo->cbObject;
-
-    Assert(sizeof(uint64_t) == sizeof(Data.ftCreationTime));
-    RTTimeSpecSetNtTime(&pObjInfo->BirthTime,         *(uint64_t *)&Data.ftCreationTime);
-    RTTimeSpecSetNtTime(&pObjInfo->AccessTime,        *(uint64_t *)&Data.ftLastAccessTime);
-    RTTimeSpecSetNtTime(&pObjInfo->ModificationTime,  *(uint64_t *)&Data.ftLastWriteTime);
+    //RTTimeSpecSetNtTime(&pObjInfo->BirthTime,         *(uint64_t *)&Data.ftCreationTime);
+    
     pObjInfo->ChangeTime  = pObjInfo->ModificationTime;
 
-    pObjInfo->Attr.fMode  = rtFsModeFromDos((Data.dwFileAttributes << RTFS_DOS_SHIFT) & RTFS_DOS_MASK_NT,
-                                            pszPath, strlen(pszPath));
-
-    /*
-     * Requested attributes (we cannot provide anything actually).
-     */
-    switch (enmAdditionalAttribs)
-    {
-        case RTFSOBJATTRADD_NOTHING:
-            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_NOTHING;
-            break;
-
-        case RTFSOBJATTRADD_UNIX:
-            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_UNIX;
-            pObjInfo->Attr.u.Unix.uid             = ~0U;
-            pObjInfo->Attr.u.Unix.gid             = ~0U;
-            pObjInfo->Attr.u.Unix.cHardlinks      = 1;
-            pObjInfo->Attr.u.Unix.INodeIdDevice   = 0; /** @todo use volume serial number */
-            pObjInfo->Attr.u.Unix.INodeId         = 0; /** @todo use fileid (see GetFileInformationByHandle). */
-            pObjInfo->Attr.u.Unix.fFlags          = 0;
-            pObjInfo->Attr.u.Unix.GenerationId    = 0;
-            pObjInfo->Attr.u.Unix.Device          = 0;
-            break;
-
-        case RTFSOBJATTRADD_UNIX_OWNER:
-            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_UNIX_OWNER;
-            pObjInfo->Attr.u.UnixOwner.uid        = ~0U;
-            pObjInfo->Attr.u.UnixOwner.szName[0]  = '\0'; /** @todo return something sensible here. */
-            break;
-
-        case RTFSOBJATTRADD_UNIX_GROUP:
-            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_UNIX_GROUP;
-            pObjInfo->Attr.u.UnixGroup.gid        = ~0U;
-            pObjInfo->Attr.u.UnixGroup.szName[0]  = '\0';
-            break;
-
-        case RTFSOBJATTRADD_EASIZE:
-            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_EASIZE;
-            pObjInfo->Attr.u.EASize.cb            = 0;
-            break;
-
-        default:
-            AssertMsgFailed(("Impossible!\n"));
-            return VERR_INTERNAL_ERROR;
-    }
+    pObjInfo->Attr.fMode  = RTFS_TYPE_FILE;
+    pObjInfo->Attr.enmAdditional = RTFSOBJATTRADD_NOTHING;
+    
 
     return VINF_SUCCESS;
 }
@@ -687,62 +577,18 @@ RTR3DECL(int) EFFsQuerySizes(const char *pszFsPath, RTFOFF *pcbTotal, RTFOFF *pc
      */
     AssertMsgReturn(VALID_PTR(pszFsPath) && *pszFsPath, ("%p", pszFsPath), VERR_INVALID_PARAMETER);
     int rc = VINF_SUCCESS;
- #if 0
-    PRTUTF16 pwszFsRoot;
-    int rc = rtFsGetRoot(pszFsPath, &pwszFsRoot);
-    if (RT_FAILURE(rc))
-        return rc;
-
-    /*
-     * Free and total.
-     */
-    if (pcbTotal || pcbFree)
-    {
-        ULARGE_INTEGER cbTotal;
-        ULARGE_INTEGER cbFree;
-        if (GetDiskFreeSpaceExW(pwszFsRoot, &cbFree, &cbTotal, NULL))
-        {
-            if (pcbTotal)
-                *pcbTotal = cbTotal.QuadPart;
-            if (pcbFree)
-                *pcbFree  = cbFree.QuadPart;
-        }
-        else
-        {
-            DWORD Err = GetLastError();
-            rc = RTErrConvertFromWin32(Err);
-            Log(("RTFsQuerySizes(%s,): GetDiskFreeSpaceEx failed with lasterr %d (%Rrc)\n",
-                 pszFsPath, Err, rc));
-        }
+    if(pcbTotal){
+        *pcbTotal = ef->dev->size;
     }
-
-    /*
-     * Block and sector size.
-     */
-    if (    RT_SUCCESS(rc)
-        &&  (pcbBlock || pcbSector))
-    {
-        DWORD dwDummy1, dwDummy2;
-        DWORD cbSector;
-        DWORD cSectorsPerCluster;
-        if (GetDiskFreeSpaceW(pwszFsRoot, &cSectorsPerCluster, &cbSector, &dwDummy1, &dwDummy2))
-        {
-            if (pcbBlock)
-                *pcbBlock = cbSector * cSectorsPerCluster;
-            if (pcbSector)
-                *pcbSector = cbSector;
-        }
-        else
-        {
-            DWORD Err = GetLastError();
-            rc = RTErrConvertFromWin32(Err);
-            Log(("RTFsQuerySizes(%s,): GetDiskFreeSpace failed with lasterr %d (%Rrc)\n",
-                 pszFsPath, Err, rc));
-        }
+    if(pcbFree){
+        *pcbFree = (100 - ef->sb->allocated_percent) * ef->dev->size;
     }
-
-    rtFsFreeRoot(pwszFsRoot);
-#endif
+    if(pcbBlock){   // cluster as block
+        *pcbBlock = 1 << (ef->sb->sector_bits+ ef->sb->spc_bits);
+    }
+    if(pcbSector){
+        *pcbSector = 1 << ef->sb->sector_bits;
+    }
     return rc;
 }
 
