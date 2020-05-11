@@ -267,7 +267,8 @@ ifdef IPRT_WITH_KSTUFF
 endif
 
 RuntimeR3_INCS.win += D:/Code/exfat_forwin/libexfat
-RuntimeR3_LIBS.win += D:/Code/exfat_forwin/x64/Debug/libexfat.lib
+RuntimeR3_INCS.win += D:/Code/exfat_forwin/exfatserver
+#RuntimeR3_LIBS.win += D:/Code/exfat_forwin/x64/Debug/libexfat.lib
 
 # RuntimeR3_INCS.solaris  = \
 #    /usr/include
@@ -1285,7 +1286,7 @@ RuntimeGuestR3_SOURCES.win.x86               += \
 #
 RuntimeGuestR3-x86_EXTENDS              := RuntimeGuestR3
 RuntimeGuestR3-x86_BLD_TRG_ARCH         := x86
-RuntimeGuestR3-x86_LIBS.win				+= D:/Code/exfat_forwin/Debug/libexfat.lib
+#RuntimeGuestR3-x86_LIBS.win				+= D:/Code/exfat_forwin/Debug/libexfat.lib
 
 
 #
@@ -1410,7 +1411,7 @@ VBoxRT_LIBS.win                = \
 	$(PATH_SDK_$(VBOX_WINDDK)_LIB)/vccomsup.lib \
 	$(PATH_SDK_$(VBOX_WINDDK)_LIB)/wbemuuid.lib \
 	$(PATH_TOOL_$(VBOX_VCC_TOOL)_LIB)/delayimp.lib 
-VBoxRT_LIBS.win += D:/Code/exfat_forwin/x64/Debug/libexfat.lib
+#VBoxRT_LIBS.win += D:/Code/exfat_forwin/x64/Debug/libexfat.lib
 VBoxRT_LDFLAGS.darwin          = -framework IOKit -framework CoreFoundation -framework CoreServices -install_name $(VBOX_DYLD_EXECUTABLE_PATH)/VBoxRT.dylib
 VBoxRT_LDFLAGS.win             = /MANIFEST \
 	/delayload:gdi32.dll \
@@ -1516,8 +1517,8 @@ endif
 VBoxRT-x86_LIBS.win                = \
 	$(PATH_SDK_$(VBOX_WINDDK)_LIB.x86)/vccomsup.lib \
 	$(PATH_SDK_$(VBOX_WINDDK)_LIB.x86)/wbemuuid.lib \
-	$(PATH_TOOL_$(VBOX_VCC_TOOL_STEM)X86_LIB)/delayimp.lib \
-	D:/Code/exfat_forwin/Debug/libexfat.lib
+	$(PATH_TOOL_$(VBOX_VCC_TOOL_STEM)X86_LIB)/delayimp.lib 
+#	D:/Code/exfat_forwin/Debug/libexfat.lib
 
 VBoxRT-x86_SOURCES.win = $(filter-out %.def %.rc,$(VBoxRT_SOURCES.win)) \
 	$(VBoxRT-x86_0_OUTDIR)/VBoxRT-x86.def

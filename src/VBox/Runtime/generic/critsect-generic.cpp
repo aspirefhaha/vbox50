@@ -265,7 +265,7 @@ DECL_FORCE_INLINE(int) rtCritSectEnter(PRTCRITSECT pCritSect, PCRTLOCKVALSRCPOS 
                 return VINF_SUCCESS;
             }
 
-            AssertBreakpoint(); /* don't do normal assertion here, the logger uses this code too. */
+            //AssertBreakpoint(); /* don't do normal assertion here, the logger uses this code too. */
             ASMAtomicDecS32(&pCritSect->cLockers);
             return VERR_SEM_NESTED;
         }

@@ -17,9 +17,17 @@
 # define _WIN32_WINNT 0x0500
 #endif
 #include <Windows.h>
+
+#define USE_TCP 1
+#if USE_TCP
+#include "exfatserver.h"
+
+
+#else
 extern "C" {
 #include "exfat.h"
 }
+#endif
 #include <iprt/file.h>
 #include <iprt/path.h>
 #include <iprt/assert.h>
@@ -30,11 +38,122 @@ extern "C" {
 #include "internal/fs.h"
 #include "internal/path.h"
 
-
 /*******************************************************************************
 *   Defined Constants And Macros                                               *
 *******************************************************************************/
+#if USE_TCP
+struct st_ThSock {
+    DWORD thId;
+    SOCKET sock;
+};
 
+#define THSOCKMAX   20
+ struct st_ThSock thSocks[THSOCKMAX] = {0};
+ int curSockNum = -1; // -1 for init value , 0~THSOCKMAX is reasonable
+static HANDLE ghMutex ;
+
+#if 0
+BOOL APIENTRY DllMain( HMODULE hModule,  
+                       DWORD  ul_reason_for_call,  
+                       LPVOID lpReserved  
+                     )  
+{  
+    switch( ul_reason_for_call ) {
+	case DLL_PROCESS_ATTACH:
+		OutputDebugString("exfat DLL_PROCESS_ATTACH\n");
+		
+		break;
+	case DLL_THREAD_ATTACH:
+		OutputDebugString("exfat  DLL_THREAD_ATTACH\n");
+		
+		break;
+	case DLL_THREAD_DETACH:
+		OutputDebugString("exfat DLL_THREAD_DETACH\n");
+        {
+            DWORD curID = GetCurrentThreadId();
+            for ( int i = 0 ;i<THSOCKMAX;i++){
+                if(thSocks[i].thId == curID && thSocks[i].sock!= INVALID_SOCKET){
+                    closesocket(thSocks[i].sock);
+                    thSocks[i].thId = 0;
+                    thSocks[i].sock = INVALID_SOCKET;
+                    break;
+                }
+            }
+        }
+		
+		break;
+	case DLL_PROCESS_DETACH:
+		{
+			OutputDebugString("exfat  DLL_PROCESS_DETACH\n");
+			
+		}
+		break;
+	}
+	return TRUE; 
+}  
+#endif
+//static SOCKET sockClient = INVALID_SOCKET;
+static SOCKET init_exfatfs(void)
+{
+    DWORD curID = GetCurrentThreadId();
+    SOCKET curSock = INVALID_SOCKET;
+
+    if(curSockNum==-1){
+      ghMutex  = CreateMutex(NULL,FALSE,NULL);
+      for(int i = 0;i < THSOCKMAX;i++){
+          thSocks[i].sock = INVALID_SOCKET;
+          thSocks[i].thId = 0;
+      }
+      curSockNum = 0;
+    }
+
+    for ( int i = 0 ;i<THSOCKMAX;i++){
+        if(thSocks[i].thId == curID && thSocks[i].sock!= INVALID_SOCKET){
+            curSock = thSocks[i].sock;
+            break;
+        }
+    }
+    if(curSock == INVALID_SOCKET){
+		WORD wVerisonRequested;
+		WSADATA wsaData;
+		int err;
+		wVerisonRequested = MAKEWORD(1, 1);
+		err = WSAStartup(wVerisonRequested, &wsaData);
+		if (err != 0)
+		{
+			return INVALID_SOCKET;
+		}
+		curSock = socket(AF_INET, SOCK_STREAM, 0);
+
+		// connect server socket
+		SOCKADDR_IN addrServer;
+		addrServer.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+		addrServer.sin_family = AF_INET;
+		addrServer.sin_port = htons(EXFATSERVERPORT);
+		if(connect(curSock, (SOCKADDR *)&addrServer, sizeof(addrServer))==SOCKET_ERROR){
+			curSock = INVALID_SOCKET;
+            Assert(0);
+		}
+        else{
+            int i = 0;
+            for(i = 0;i < THSOCKMAX;i++){
+                if(thSocks[i].sock == INVALID_SOCKET){
+                    thSocks[i].thId = curID;
+                    thSocks[i].sock = curSock;
+					break;
+                }
+                  
+            }
+            Assert(i<THSOCKMAX);
+        }
+        
+    }
+    return curSock;
+    
+}
+
+#define EXFAT_CHECK(kk)    SOCKET sockClient = init_exfatfs();if(sockClient==INVALID_SOCKET)return kk
+#else
 static struct exfat * ef = NULL;
 
 static void init_exfatfs(void)
@@ -46,6 +165,7 @@ static void init_exfatfs(void)
 }
 
 #define EXFAT_CHECK(kk)    do{init_exfatfs();if(ef==NULL)return kk;}while(0)
+#endif
 /**
  * This is wrapper around the ugly SetFilePointer api.
  *
@@ -60,30 +180,6 @@ static void init_exfatfs(void)
  */
 DECLINLINE(bool) EFSetFilePointer(RTFILE hFile, uint64_t offSeek, uint64_t *poffNew, unsigned uMethod)
 {
-#if 0
-    bool            fRc;
-    LARGE_INTEGER   off;
-
-    off.QuadPart = offSeek;
-#if 1
-    if (off.LowPart != INVALID_SET_FILE_POINTER)
-    {
-        off.LowPart = SetFilePointer((HANDLE)RTFileToNative(hFile), off.LowPart, &off.HighPart, uMethod);
-        fRc = off.LowPart != INVALID_SET_FILE_POINTER;
-    }
-    else
-    {
-        SetLastError(NO_ERROR);
-        off.LowPart = SetFilePointer((HANDLE)RTFileToNative(hFile), off.LowPart, &off.HighPart, uMethod);
-        fRc = GetLastError() == NO_ERROR;
-    }
-#else
-    fRc = SetFilePointerEx((HANDLE)RTFileToNative(hFile), off, &off, uMethod);
-#endif
-    if (fRc && poffNew)
-        *poffNew = off.QuadPart;
-    return fRc;
-#endif
     return false;
 }
 
@@ -99,45 +195,12 @@ DECLINLINE(bool) EFSetFilePointer(RTFILE hFile, uint64_t offSeek, uint64_t *poff
  */
 DECLINLINE(bool) EFIsBeyondLimit(RTFILE hFile, uint64_t offSeek, unsigned uMethod)
 {
-#if 0
-    bool fIsBeyondLimit = false;
-
-    /*
-     * Get the current file position and try set the new one.
-     * If it fails with a seek error it's because we hit the file system limit.
-     */
-/** @todo r=bird: I'd be very interested to know on which versions of windows and on which file systems
- * this supposedly works. The fastfat sources in the latest WDK makes no limit checks during
- * file seeking, only at the time of writing (and some other odd ones we cannot make use of). */
-    uint64_t offCurrent;
-    if (EFSetFilePointer(hFile, 0, &offCurrent, FILE_CURRENT))
-    {
-        if (!EFSetFilePointer(hFile, offSeek, NULL, uMethod))
-            fIsBeyondLimit = GetLastError() == ERROR_SEEK;
-        else /* Restore file pointer on success. */
-            EFSetFilePointer(hFile, offCurrent, NULL, FILE_BEGIN);
-    }
-
-    return fIsBeyondLimit;
-#endif
     return false;
 }
 
 
 RTR3DECL(int) EFFileFromNative(PRTFILE pFile, RTHCINTPTR uNative)
 {
-#if 0
-    HANDLE h = (HANDLE)uNative;
-    AssertCompile(sizeof(h) == sizeof(uNative));
-    if (h == INVALID_HANDLE_VALUE)
-    {
-        AssertMsgFailed(("%p\n", uNative));
-        *pFile = NIL_RTFILE;
-        return VERR_INVALID_HANDLE;
-    }
-    *pFile = (RTFILE)h;
-    return VINF_SUCCESS;
-#endif
     return VERR_NOT_IMPLEMENTED;
 }
 
@@ -257,90 +320,10 @@ RTR3DECL(int) EFFileOpen(PRTFILE pFile, const char *pszFilename, uint64_t fOpen)
             AssertMsgFailed(("Impossible fOpen=%#llx\n", fOpen));
             return VERR_INVALID_PARAMETER;
     }
-#if 0
-    SECURITY_ATTRIBUTES  SecurityAttributes;
-    PSECURITY_ATTRIBUTES pSecurityAttributes = NULL;
-    if (fOpen & RTFILE_O_INHERIT)
-    {
-        SecurityAttributes.nLength              = sizeof(SecurityAttributes);
-        SecurityAttributes.lpSecurityDescriptor = NULL;
-        SecurityAttributes.bInheritHandle       = TRUE;
-        pSecurityAttributes = &SecurityAttributes;
-    }
 
-    DWORD dwFlagsAndAttributes;
-    dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL;
-    if (fOpen & RTFILE_O_WRITE_THROUGH)
-        dwFlagsAndAttributes |= FILE_FLAG_WRITE_THROUGH;
-    if (fOpen & RTFILE_O_ASYNC_IO)
-        dwFlagsAndAttributes |= FILE_FLAG_OVERLAPPED;
-    if (fOpen & RTFILE_O_NO_CACHE)
-    {
-        dwFlagsAndAttributes |= FILE_FLAG_NO_BUFFERING;
-        dwDesiredAccess &= ~FILE_APPEND_DATA;
-    }
-
-    /*
-     * Open/Create the file.
-     */
-    PRTUTF16 pwszFilename;
-    rc = RTStrToUtf16(pszFilename, &pwszFilename);
-    if (RT_FAILURE(rc))
-        return rc;
-    EXFAT_CHECK(rc);
-    if(ef){
-
-        return rc;
-    }
-    HANDLE hFile = CreateFileW(pwszFilename,
-                               dwDesiredAccess,
-                               dwShareMode,
-                               pSecurityAttributes,
-                               dwCreationDisposition,
-                               dwFlagsAndAttributes,
-                               NULL);
-    if (hFile != INVALID_HANDLE_VALUE)
-    {
-        bool fCreated = dwCreationDisposition == CREATE_ALWAYS
-                     || dwCreationDisposition == CREATE_NEW
-                     || (dwCreationDisposition == OPEN_ALWAYS && GetLastError() == 0);
-
-        /*
-         * Turn off indexing of directory through Windows Indexing Service.
-         */
-        if (    fCreated
-            &&  (fOpen & RTFILE_O_NOT_CONTENT_INDEXED))
-        {
-            if (!SetFileAttributesW(pwszFilename, FILE_ATTRIBUTE_NOT_CONTENT_INDEXED))
-                rc = RTErrConvertFromWin32(GetLastError());
-        }
-        /*
-         * Do we need to truncate the file?
-         */
-        else if (    !fCreated
-                 &&     (fOpen & (RTFILE_O_TRUNCATE | RTFILE_O_ACTION_MASK))
-                     == (RTFILE_O_TRUNCATE | RTFILE_O_OPEN_CREATE))
-        {
-            if (!SetEndOfFile(hFile))
-                rc = RTErrConvertFromWin32(GetLastError());
-        }
-        if (RT_SUCCESS(rc))
-        {
-            *pFile = (RTFILE)hFile;
-            Assert((HANDLE)*pFile == hFile);
-            RTUtf16Free(pwszFilename);
-            return VINF_SUCCESS;
-        }
-
-        CloseHandle(hFile);
-    }
-    else
-        rc = RTErrConvertFromWin32(GetLastError());
-    RTUtf16Free(pwszFilename);
-#else
     struct exfat_node* node = NULL;
-    char tmpname[MAX_PATH] = {0};
-    char localfilename[MAX_PATH]={0};
+    char tmpname[EXFAT_UTF8_NAME_BUFFER_MAX] = {0};
+    char localfilename[EXFAT_UTF8_NAME_BUFFER_MAX]={0};
     int findres = -1;
     strcpy(tmpname,pszFilename);
     char * shortname  = strchr((char *)tmpname,'\\');
@@ -357,7 +340,31 @@ RTR3DECL(int) EFFileOpen(PRTFILE pFile, const char *pszFilename, uint64_t fOpen)
     else{
         strcpy(localfilename,tmpname);
     }
-    
+ #if USE_TCP
+    rc = VERR_GENERAL_FAILURE;
+    do{
+        char cmddata[TEC_EFFILEOPEN]={0};
+        cmddata[0]= TECMD_EFFileOpen;
+        memcpy(&cmddata[1],&dwCreationDisposition,sizeof(dwCreationDisposition));
+        memcpy(&cmddata[5] ,&localfilename,sizeof(localfilename));
+        
+        int sendret = send(sockClient, cmddata, TEC_EFFILEOPEN , 0);
+
+        if(sendret != TEC_EFFILEOPEN)
+            break;
+        int tmpRecvLen = 0;
+        int curLen = 1;
+        char recvdata[TEA_EFFILEOPEN]={0};        
+        while(tmpRecvLen < TEA_EFFILEOPEN && curLen >0){
+            curLen =  recv(sockClient,recvdata+tmpRecvLen,TEA_EFFILEOPEN-tmpRecvLen,0);
+            tmpRecvLen += curLen;
+        }
+        if(recvdata[0]!= TECMD_EFFileOpen)
+            break;
+        rc = recvdata[1] ;
+        memcpy(pFile,&recvdata[2],sizeof(RTFILE));
+    }while(0);
+ #else   
     if(dwCreationDisposition != 0){
         switch(dwCreationDisposition){
         case OPEN_EXISTING:
@@ -453,22 +460,10 @@ RTR3DECL(int) EFFileOpen(PRTFILE pFile, const char *pszFilename, uint64_t fOpen)
             break;
         
         }
-#if 0
-        int createres = exfat_mknod(ef,localfilename);
-        if(createres == 0){
-            findres = exfat_lookup(ef,&node,localfilename);
-            if(findres==0){
-                *pFile = (RTFILE) node;
-                rc = VINF_SUCCESS;
-            }
-
-        }
-        else
-            rc =  VERR_INVALID_PARAMETER;
-#endif       
+      
     }
-       
-#endif
+
+ #endif      
     return rc;
 }
 
@@ -479,7 +474,6 @@ RTR3DECL(int) EFFileOpenBitBucket(PRTFILE phFile, uint64_t fAccess)
                  || fAccess == RTFILE_O_WRITE
                  || fAccess == RTFILE_O_READWRITE,
                  VERR_INVALID_PARAMETER);
-    //return RTFileOpen(phFile, "NUL", fAccess | RTFILE_O_DENY_NONE | RTFILE_O_OPEN);
     return VERR_NOT_IMPLEMENTED;
 }
 
@@ -488,36 +482,43 @@ RTR3DECL(int) EFFileClose(RTFILE hFile)
 {
     if (hFile == NIL_RTFILE)
         return VINF_SUCCESS;
+#if USE_TCP
+    EXFAT_CHECK(VERR_GENERAL_FAILURE) ;
+    int rc = VERR_GENERAL_FAILURE;
+    do{
+        char cmddata[TEC_EFFILECLOSE]={0};
+        cmddata[0]= TECMD_EFFileClose;
+        memcpy(&cmddata[1],&hFile,sizeof(RTFILE));
+        
+        int sendret = send(sockClient, cmddata, TEC_EFFILECLOSE , 0);
+
+        if(sendret != TEC_EFFILECLOSE)
+            break;
+        int tmpRecvLen = 0;
+        int curLen = 1;
+        char recvdata[TEA_EFFILECLOSE]={0};        
+        while(tmpRecvLen < TEA_EFFILECLOSE && curLen >0){
+            curLen =  recv(sockClient,recvdata+tmpRecvLen,TEA_EFFILECLOSE-tmpRecvLen,0);
+            tmpRecvLen += curLen;
+        }
+        if(recvdata[0]!= TECMD_EFFileClose)
+            break;
+        rc = recvdata[1] ;
+    }while(0);
+ #else   
+    int rc = VINF_SUCCESS;    
     struct exfat_node * pnode = (struct exfat_node *)hFile;
 	exfat_flush_node(ef,pnode);
     exfat_put_node(ef,pnode);
     pnode->curpos = 0;
-    return VINF_SUCCESS;
+ #endif   
+    return rc;
 }
 
 
 RTFILE efFileGetStandard(RTHANDLESTD enmStdHandle)
 {
-#if 0
-    DWORD dwStdHandle;
-    switch (enmStdHandle)
-    {
-        case RTHANDLESTD_INPUT:     dwStdHandle = STD_INPUT_HANDLE;  break;
-        case RTHANDLESTD_OUTPUT:    dwStdHandle = STD_OUTPUT_HANDLE; break;
-        case RTHANDLESTD_ERROR:     dwStdHandle = STD_ERROR_HANDLE;  break;
-            break;
-        default:
-            AssertFailedReturn(NIL_RTFILE);
-    }
 
-    HANDLE hNative = GetStdHandle(dwStdHandle);
-    if (hNative == INVALID_HANDLE_VALUE)
-        return NIL_RTFILE;
-
-    RTFILE hFile = (RTFILE)(uintptr_t)hNative;
-    AssertReturn((HANDLE)(uintptr_t)hFile == hNative, NIL_RTFILE);
-    return hFile;
-#endif
     return NIL_RTFILE;
 }
 
@@ -534,7 +535,36 @@ RTR3DECL(int) EFPathQueryInfoEx(const char *pszPath, PRTFSOBJINFO pObjInfo, RTFS
                     ("Invalid enmAdditionalAttribs=%p\n", enmAdditionalAttribs),
                     VERR_INVALID_PARAMETER);
     AssertMsgReturn(RTPATH_F_IS_VALID(fFlags, 0), ("%#x\n", fFlags), VERR_INVALID_PARAMETER);
+ #if USE_TCP
+    EXFAT_CHECK(VERR_GENERAL_FAILURE) ;
+    int vrc = VERR_GENERAL_FAILURE;
+    do{
+        char cmddata[TEC_EFPATHQUERYINFOEX]={0};
+        memset(cmddata,0,TEC_EFPATHQUERYINFOEX);
+        cmddata[0]= TECMD_EFPathQueryInfoEx;
+        strcpy(&cmddata[1],pszPath);
+        
+        int sendret = send(sockClient, cmddata, TEC_EFPATHQUERYINFOEX , 0);
 
+        if(sendret != TEC_EFPATHQUERYINFOEX)
+            break;
+        int tmpRecvLen = 0;
+        int curLen = 1;
+        char recvdata[TEA_EFPATHQUERYINFOEX]={0};        
+        while(tmpRecvLen < TEA_EFPATHQUERYINFOEX && curLen >0){
+            curLen =  recv(sockClient,recvdata+tmpRecvLen,TEA_EFPATHQUERYINFOEX-tmpRecvLen,0);
+            tmpRecvLen += curLen;
+        }
+        if(recvdata[0]!= TECMD_EFPathQueryInfoEx)
+            break;
+        vrc = VINF_SUCCESS ;
+        memcpy(pObjInfo,&recvdata[1],sizeof(EFFSOBJINFO));
+        pObjInfo->ChangeTime  = pObjInfo->ModificationTime;
+
+        pObjInfo->Attr.fMode  = RTFS_TYPE_FILE;
+        pObjInfo->Attr.enmAdditional = RTFSOBJATTRADD_NOTHING;
+    }while(0);
+ #else
     /*
      * Query file info.
      */
@@ -543,25 +573,23 @@ RTR3DECL(int) EFPathQueryInfoEx(const char *pszPath, PRTFSOBJINFO pObjInfo, RTFS
     if(vrc != 0){
         return VERR_INVALID_PARAMETER;
     }
-    //struct stat exfatstat;
-    //exfat_stat(ef,pnode,&exfatstat);
+    else{
+        vrc = VINF_SUCESS;
+    }
     pObjInfo->cbObject    = pnode->size;
     pObjInfo->cbAllocated = ROUND_UP(pnode->size, CLUSTER_SIZE(*ef->sb)) ;
-    //pObjInfo->AccessTime  = pnode->atime;
-    //pObjInfo->BirthTime   = pnode->mtime;
-    //pObjInfo->ModificationTime = pnode->mtime;
+    pObjInfo->AccessTime.i64NanosecondsRelativeToUnixEpoch  = pnode->atime;
+    pObjInfo->BirthTime.i64NanosecondsRelativeToUnixEpoch   = pnode->mtime;
+    pObjInfo->ModificationTime.i64NanosecondsRelativeToUnixEpoch = pnode->mtime;
     exfat_put_node(ef,pnode);
-    
-
-    //RTTimeSpecSetNtTime(&pObjInfo->BirthTime,         *(uint64_t *)&Data.ftCreationTime);
     
     pObjInfo->ChangeTime  = pObjInfo->ModificationTime;
 
     pObjInfo->Attr.fMode  = RTFS_TYPE_FILE;
     pObjInfo->Attr.enmAdditional = RTFSOBJATTRADD_NOTHING;
     
-
-    return VINF_SUCCESS;
+#endif
+    return vrc;
 }
 
 RTR3DECL(int) EFPathQueryInfo(const char *pszPath, PRTFSOBJINFO pObjInfo, RTFSOBJATTRADD enmAdditionalAttribs)
@@ -572,6 +600,41 @@ RTR3DECL(int) EFPathQueryInfo(const char *pszPath, PRTFSOBJINFO pObjInfo, RTFSOB
 RTR3DECL(int) EFFsQuerySizes(const char *pszFsPath, RTFOFF *pcbTotal, RTFOFF *pcbFree,
                              uint32_t *pcbBlock, uint32_t *pcbSector)
 {
+ #if USE_TCP
+    EXFAT_CHECK(VERR_GENERAL_FAILURE) ;
+    int rc = VERR_GENERAL_FAILURE;
+    do{
+        char cmddata[TEC_EFFSQUERYSIZES]={0};
+        cmddata[0]= TECMD_EFFsQuerySizes;
+        
+        int sendret = send(sockClient, cmddata, TEC_EFFSQUERYSIZES , 0);
+
+        if(sendret != TEC_EFFSQUERYSIZES)
+            break;
+        int tmpRecvLen = 0;
+        int curLen = 1;
+        char recvdata[TEA_EFFSQUERYSIZES]={0};        
+        while(tmpRecvLen < TEA_EFFSQUERYSIZES && curLen >0){
+            curLen =  recv(sockClient,recvdata+tmpRecvLen,TEA_EFFSQUERYSIZES-tmpRecvLen,0);
+            tmpRecvLen += curLen;
+        }
+        if(recvdata[0]!= TECMD_EFFsQuerySizes)
+            break;
+        rc = VINF_SUCCESS ;
+        if(pcbTotal){
+            memcpy(pcbTotal,&recvdata[1],sizeof(RTFOFF));
+        }
+        if(pcbFree){
+            memcpy(pcbFree,&recvdata[9],sizeof(RTFOFF));
+        }
+        if(pcbBlock){
+            memcpy(pcbBlock,&recvdata[17],sizeof(uint32_t));
+        }
+        if(pcbSector){
+            memcpy(pcbSector,&recvdata[21],sizeof(uint32_t));
+        }  
+    }while(0);
+ #else    
     /*
      * Validate & get valid root path.
      */
@@ -590,35 +653,44 @@ RTR3DECL(int) EFFsQuerySizes(const char *pszFsPath, RTFOFF *pcbTotal, RTFOFF *pc
         *pcbSector = 1 << ef->sb->sector_bits;
     }
     return rc;
+#endif
+    return VERR_NOT_IMPLEMENTED;    
 }
 
 
 RTR3DECL(int) EFFileSeek(RTFILE hFile, int64_t offSeek, unsigned uMethod, uint64_t *poffActual)
 {
-#if 0
-    static ULONG aulSeekRecode[] =
-    {
-        FILE_BEGIN,
-        FILE_CURRENT,
-        FILE_END,
-    };
+ #if USE_TCP
+    EXFAT_CHECK(VERR_GENERAL_FAILURE) ;
+    int rc = VERR_GENERAL_FAILURE;
+    do{
+        char cmddata[TEC_EFFILESEEK]={0};
+        cmddata[0]= TECMD_EFFileSeek;
+        memcpy(&cmddata[1],&hFile,sizeof(RTFILE));
+        memcpy(&cmddata[9],&offSeek,sizeof(int64_t));
+        memcpy(&cmddata[17],&uMethod,sizeof(unsigned));
+        
+        int sendret = send(sockClient, cmddata, TEC_EFFILESEEK , 0);
 
-    /*
-     * Validate input.
-     */
-    if (uMethod > RTFILE_SEEK_END)
-    {
-        AssertMsgFailed(("Invalid uMethod=%d\n", uMethod));
-        return VERR_INVALID_PARAMETER;
-    }
-
-    /*
-     * Execute the seek.
-     */
-    if (EFSetFilePointer(hFile, offSeek, poffActual, aulSeekRecode[uMethod]))
-        return VINF_SUCCESS;
-    return RTErrConvertFromWin32(GetLastError());
-#endif
+        if(sendret != TEC_EFFILESEEK)
+            break;
+        int tmpRecvLen = 0;
+        int curLen = 1;
+        char recvdata[TEA_EFFILESEEK]={0};        
+        while(tmpRecvLen < TEA_EFFILESEEK && curLen >0){
+            curLen =  recv(sockClient,recvdata+tmpRecvLen,TEA_EFFILESEEK-tmpRecvLen,0);
+            tmpRecvLen += curLen;
+        }
+        if(recvdata[0]!= TECMD_EFFileSeek)
+            break;
+        rc = VINF_SUCCESS ;
+        
+        if(poffActual){
+            memcpy(poffActual,&recvdata[1],sizeof(uint64_t));
+        }
+                    
+    }while(0);
+ #else
     if (uMethod > RTFILE_SEEK_END)
     {
         AssertMsgFailed(("Invalid uMethod=%d\n", uMethod));
@@ -645,88 +717,63 @@ RTR3DECL(int) EFFileSeek(RTFILE hFile, int64_t offSeek, unsigned uMethod, uint64
     default:
         return VERR_INVALID_PARAMETER;
     }
+#endif    
     return VINF_SUCCESS;
 }
 
 
 RTR3DECL(int) EFFileRead(RTFILE hFile, void *pvBuf, size_t cbToRead, size_t *pcbRead)
 {
+	
     if (cbToRead <= 0)
         return VINF_SUCCESS;
+ #if USE_TCP
+    EXFAT_CHECK(VERR_GENERAL_FAILURE) ;
+    int rc = VERR_GENERAL_FAILURE;
+    do{
+        char cmddata[TEC_EFFILEREAD]={0};
+        cmddata[0]= TECMD_EFFileRead;
+        memcpy(&cmddata[1],&hFile,sizeof(RTFILE));
+        memcpy(&cmddata[9],&cbToRead,sizeof(cbToRead));
+        
+        int sendret = send(sockClient, cmddata, TEC_EFFILEREAD , 0);
+
+        if(sendret != TEC_EFFILEREAD)
+            break;
+        int tmpRecvLen = 0;
+        int curLen = 1;
+        char recvdata[TEA_EFFILEREAD]={0};        
+        while(tmpRecvLen < TEA_EFFILEREAD && curLen >0){
+            curLen =  recv(sockClient,recvdata+tmpRecvLen,TEA_EFFILEREAD-tmpRecvLen,0);
+            tmpRecvLen += curLen;
+        }
+        if(recvdata[0]!= TECMD_EFFileRead)
+            break;
+        size_t tmpCount = 0;
+        memcpy(&tmpCount,&recvdata[1],sizeof(size_t));
+        Assert(tmpCount<0x100000000LL);
+        int needCount = (int)tmpCount;
+        curLen = 1;
+		tmpRecvLen = 0;
+        while(tmpRecvLen < needCount && curLen >0){
+            char * tmppos = (char *)pvBuf;
+            tmppos += tmpRecvLen;
+            curLen =  recv(sockClient,tmppos,needCount-tmpRecvLen,0);
+            tmpRecvLen += curLen;
+        }
+        rc = VINF_SUCCESS ;
+        
+        if(pcbRead){
+            *pcbRead = tmpCount;
+        }
+                    
+    }while(0);
+ #else    
     ULONG cbToReadAdj = (ULONG)cbToRead;
     AssertReturn(cbToReadAdj == cbToRead, VERR_NUMBER_TOO_BIG);
 
     ULONG cbRead = 0;
-#if 0
-    if (ReadFile((HANDLE)RTFileToNative(hFile), pvBuf, cbToReadAdj, &cbRead, NULL))
-    {
-        if (pcbRead)
-            /* Caller can handle partial reads. */
-            *pcbRead = cbRead;
-        else
-        {
-            /* Caller expects everything to be read. */
-            while (cbToReadAdj > cbRead)
-            {
-                ULONG cbReadPart = 0;
-                if (!ReadFile((HANDLE)RTFileToNative(hFile), (char*)pvBuf + cbRead, cbToReadAdj - cbRead, &cbReadPart, NULL))
-                    return RTErrConvertFromWin32(GetLastError());
-                if (cbReadPart == 0)
-                    return VERR_EOF;
-                cbRead += cbReadPart;
-            }
-        }
-        return VINF_SUCCESS;
-    }
 
-    /*
-     * If it's a console, we might bump into out of memory conditions in the
-     * ReadConsole call.
-     */
-    DWORD dwErr = GetLastError();
-    if (dwErr == ERROR_NOT_ENOUGH_MEMORY)
-    {
-        ULONG cbChunk = cbToReadAdj / 2;
-        if (cbChunk > 16*_1K)
-            cbChunk = 16*_1K;
-        else
-            cbChunk = RT_ALIGN_32(cbChunk, 256);
-
-        cbRead = 0;
-        while (cbToReadAdj > cbRead)
-        {
-            ULONG cbToRead   = RT_MIN(cbChunk, cbToReadAdj - cbRead);
-            ULONG cbReadPart = 0;
-            if (!ReadFile((HANDLE)RTFileToNative(hFile), (char *)pvBuf + cbRead, cbToRead, &cbReadPart, NULL))
-            {
-                /* If we failed because the buffer is too big, shrink it and
-                   try again. */
-                dwErr = GetLastError();
-                if (   dwErr == ERROR_NOT_ENOUGH_MEMORY
-                    && cbChunk > 8)
-                {
-                    cbChunk /= 2;
-                    continue;
-                }
-                return RTErrConvertFromWin32(dwErr);
-            }
-            cbRead += cbReadPart;
-
-            /* Return if the caller can handle partial reads, otherwise try
-               fill the buffer all the way up. */
-            if (pcbRead)
-            {
-                *pcbRead = cbRead;
-                break;
-            }
-            if (cbReadPart == 0)
-                return VERR_EOF;
-        }
-        return VINF_SUCCESS;
-    }
-
-    return RTErrConvertFromWin32(dwErr);
-#endif
     struct exfat_node * pnode = (struct exfat_node *)hFile;
     if(((uint64_t)pnode->curpos) >= pnode->size){
         return VERR_EOF;
@@ -739,7 +786,7 @@ RTR3DECL(int) EFFileRead(RTFILE hFile, void *pvBuf, size_t cbToRead, size_t *pcb
         return VINF_SUCCESS;
     }
     
-
+#endif
     return VINF_SUCCESS;
 }
 
@@ -760,7 +807,7 @@ RTR3DECL(int)  EFFileWriteAt(RTFILE File, RTFOFF off, const void *pvBuf, size_t 
     int rc = EFFileSeek(File, off, RTFILE_SEEK_BEGIN, NULL);
     if (RT_SUCCESS(rc))
         rc = EFFileWrite(File, pvBuf, cbToWrite, pcbWritten);
-    return rc;
+    return rc; 
 }
 
 /**
@@ -777,6 +824,7 @@ RTR3DECL(int)  EFFileWriteAt(RTFILE File, RTFOFF off, const void *pvBuf, size_t 
  */
 RTR3DECL(int)  EFFileReadAt(RTFILE File, RTFOFF off, void *pvBuf, size_t cbToRead, size_t *pcbRead)
 {
+ 
     int rc = EFFileSeek(File, off, RTFILE_SEEK_BEGIN, NULL);
     if (RT_SUCCESS(rc))
         rc = EFFileRead(File, pvBuf, cbToRead, pcbRead);
@@ -788,170 +836,108 @@ RTR3DECL(int) EFFileWrite(RTFILE hFile, const void *pvBuf, size_t cbToWrite, siz
 {
     if (cbToWrite <= 0)
         return VINF_SUCCESS;
+ #if USE_TCP
+    EXFAT_CHECK(VERR_GENERAL_FAILURE) ;
+    char cmdParams[TEC_EFFILEWRITE] ={0};
+    cmdParams[0] = TECMD_EFFileWrite;
+    memcpy(&cmdParams[1],&hFile,sizeof(RTFILE));
+    memcpy(&cmdParams[9],&cbToWrite,sizeof(size_t));
+    
+    int sendret = send(sockClient,cmdParams,TEC_EFFILEWRITE,0);
+    if(sendret != TEC_EFFILEWRITE)
+        return VERR_GENERAL_FAILURE;
+    Assert(cbToWrite < 0x100000000LL);
+    int needToWrite = (int)cbToWrite;
+    sendret = send(sockClient,(char *)pvBuf,needToWrite,0);
+    if(sendret != cbToWrite)
+        return VERR_GENERAL_FAILURE;
+
+    
+    int tmpRecvLen = 0;
+    char recvdata[TEA_EFFILEWRITE] = {0};
+    int curLen = 1;
+    while(tmpRecvLen < TEA_EFFILEWRITE && curLen >0){
+        curLen =  recv(sockClient,recvdata+tmpRecvLen,TEA_EFFILEWRITE-tmpRecvLen,0);
+        tmpRecvLen += curLen;
+    }
+    if(recvdata[0]!= TECMD_EFFileWrite)
+        return VERR_INVALID_PARAMETER;
+    
+    size_t writtencount = 0;
+    memcpy(&writtencount,&recvdata[1],sizeof(size_t));
+    if(pcbWritten){
+        *pcbWritten = writtencount;
+    }
+            
+ #else        
     ULONG cbToWriteAdj = (ULONG)cbToWrite;
     AssertReturn(cbToWriteAdj == cbToWrite, VERR_NUMBER_TOO_BIG);
-#if 0
-    ULONG cbWritten = 0;
-    if (WriteFile((HANDLE)RTFileToNative(hFile), pvBuf, cbToWriteAdj, &cbWritten, NULL))
-    {
-        if (pcbWritten)
-            /* Caller can handle partial writes. */
-            *pcbWritten = cbWritten;
-        else
-        {
-            /* Caller expects everything to be written. */
-            while (cbToWriteAdj > cbWritten)
-            {
-                ULONG cbWrittenPart = 0;
-                if (!WriteFile((HANDLE)RTFileToNative(hFile), (char*)pvBuf + cbWritten,
-                               cbToWriteAdj - cbWritten, &cbWrittenPart, NULL))
-                {
-                    int rc = RTErrConvertFromWin32(GetLastError());
-                    if (   rc == VERR_DISK_FULL
-                        && EFIsBeyondLimit(hFile, cbToWriteAdj - cbWritten, FILE_CURRENT)
-                       )
-                        rc = VERR_FILE_TOO_BIG;
-                    return rc;
-                }
-                if (cbWrittenPart == 0)
-                    return VERR_WRITE_ERROR;
-                cbWritten += cbWrittenPart;
-            }
-        }
-        return VINF_SUCCESS;
-    }
-
-    /*
-     * If it's a console, we might bump into out of memory conditions in the
-     * WriteConsole call.
-     */
-    DWORD dwErr = GetLastError();
-    if (dwErr == ERROR_NOT_ENOUGH_MEMORY)
-    {
-        ULONG cbChunk = cbToWriteAdj / 2;
-        if (cbChunk > _32K)
-            cbChunk = _32K;
-        else
-            cbChunk = RT_ALIGN_32(cbChunk, 256);
-
-        cbWritten = 0;
-        while (cbToWriteAdj > cbWritten)
-        {
-            ULONG cbToWrite     = RT_MIN(cbChunk, cbToWriteAdj - cbWritten);
-            ULONG cbWrittenPart = 0;
-            if (!WriteFile((HANDLE)RTFileToNative(hFile), (const char *)pvBuf + cbWritten, cbToWrite, &cbWrittenPart, NULL))
-            {
-                /* If we failed because the buffer is too big, shrink it and
-                   try again. */
-                dwErr = GetLastError();
-                if (   dwErr == ERROR_NOT_ENOUGH_MEMORY
-                    && cbChunk > 8)
-                {
-                    cbChunk /= 2;
-                    continue;
-                }
-                int rc = RTErrConvertFromWin32(dwErr);
-                if (   rc == VERR_DISK_FULL
-                    && EFIsBeyondLimit(hFile, cbToWriteAdj - cbWritten, FILE_CURRENT))
-                    rc = VERR_FILE_TOO_BIG;
-                return rc;
-            }
-            cbWritten += cbWrittenPart;
-
-            /* Return if the caller can handle partial writes, otherwise try
-               write out everything. */
-            if (pcbWritten)
-            {
-                *pcbWritten = cbWritten;
-                break;
-            }
-            if (cbWrittenPart == 0)
-                return VERR_WRITE_ERROR;
-        }
-        return VINF_SUCCESS;
-    }
-
-    int rc = RTErrConvertFromWin32(dwErr);
-    if (   rc == VERR_DISK_FULL
-        && EFIsBeyondLimit(hFile, cbToWriteAdj - cbWritten, FILE_CURRENT))
-        rc = VERR_FILE_TOO_BIG;
-    return rc;
-#endif
     struct exfat_node * pnode = (struct exfat_node *)hFile;
 
     size_t retsize = exfat_generic_pwrite(ef,pnode,pvBuf,cbToWrite,pnode->curpos);
     pnode->curpos += retsize;
     if(pcbWritten)
         *pcbWritten = retsize;
+#endif        
     return VINF_SUCCESS;
 }
 
 
 RTR3DECL(int) EFFileFlush(RTFILE hFile)
 {
-#if 0
-    if (!FlushFileBuffers((HANDLE)RTFileToNative(hFile)))
-    {
-        int rc = GetLastError();
-        Log(("FlushFileBuffers failed with %d\n", rc));
-        return RTErrConvertFromWin32(rc);
-    }
-#endif
+#if USE_TCP
+    EXFAT_CHECK(VERR_GENERAL_FAILURE) ;
+    int rc = VERR_INVALID_HANDLE;
+    do{
+        char cmddata[TEC_EFFILEFLUSH]={0};
+        cmddata[0]= TECMD_EFFileFlush;
+        memcpy(&cmddata[1],&hFile,sizeof(RTFILE));
+        
+        int sendret = send(sockClient, cmddata, TEC_EFFILEFLUSH , 0);
+
+        if(sendret != TEC_EFFILEFLUSH)
+            break;
+        int tmpRecvLen = 0;
+        int curLen = 1;
+        char recvdata[TEA_EFFILEFLUSH]={0};        
+        while(tmpRecvLen < TEA_EFFILEFLUSH && curLen >0){
+            curLen =  recv(sockClient,recvdata+tmpRecvLen,TEA_EFFILEFLUSH-tmpRecvLen,0);
+            tmpRecvLen += curLen;
+        }
+        if(recvdata[0]!= TECMD_EFFileFlush)
+            break;
+        rc = VINF_SUCCESS ;
+                    
+    }while(0);
+ #else
     struct exfat_node * pnode = (struct exfat_node*)hFile;
     int rc = exfat_flush_node(ef,pnode);
     if(rc == 0){
         return VINF_SUCCESS;
     }
-    return VERR_INVALID_HANDLE;
+#endif    
+    return rc;
 }
 
 
 RTR3DECL(int) EFFileSetSize(RTFILE hFile, uint64_t cbSize)
 {
-#if 0
-    /*
-     * Get current file pointer.
-     */
-    int         rc;
-    uint64_t    offCurrent;
-    if (EFSetFilePointer(hFile, 0, &offCurrent, FILE_CURRENT))
-    {
-        /*
-         * Set new file pointer.
-         */
-        if (EFSetFilePointer(hFile, cbSize, NULL, FILE_BEGIN))
-        {
-            /* set file pointer */
-            if (SetEndOfFile((HANDLE)RTFileToNative(hFile)))
-            {
-                /*
-                 * Restore file pointer and return.
-                 * If the old pointer was beyond the new file end, ignore failure.
-                 */
-                if (    EFSetFilePointer(hFile, offCurrent, NULL, FILE_BEGIN)
-                    ||  offCurrent > cbSize)
-                    return VINF_SUCCESS;
-            }
 
-            /*
-             * Failed, try restoring the file pointer.
-             */
-            rc = GetLastError();
-            EFSetFilePointer(hFile, offCurrent, NULL, FILE_BEGIN);
-        }
-        else
-            rc = GetLastError();
-    }
-    else
-        rc = GetLastError();
-
-    return RTErrConvertFromWin32(rc);
-#endif
     return VERR_NOT_IMPLEMENTED;
 }
 
 RTR3DECL(int) EFFileQuerySize(const char * filename ,uint64_t *pcbSize)
 {
+ #if USE_TCP
+    RTFSOBJINFO ObjectInfo;
+    int vrc = EFPathQueryInfoEx(filename,&ObjectInfo,RTFSOBJATTRADD_NOTHING,0);
+    if(vrc != 0)
+        return vrc;
+    if(pcbSize){
+        *pcbSize = ObjectInfo.cbObject;
+    }
+    return VINF_SUCCESS;
+ #else
     struct exfat_node * pnode ;
     if(exfat_lookup(ef,&pnode,filename)==0){
 
@@ -961,63 +947,47 @@ RTR3DECL(int) EFFileQuerySize(const char * filename ,uint64_t *pcbSize)
         exfat_put_node(ef,pnode);
         return VINF_SUCCESS;
     }
+#endif
     return VERR_INVALID_PARAMETER;
 }
 
 
 RTR3DECL(int) EFFileGetSize(RTFILE hFile, uint64_t *pcbSize)
 {
+ #if USE_TCP
+    EXFAT_CHECK(VERR_GENERAL_FAILURE) ;
+    int rc = VERR_INVALID_HANDLE;
+    do{
+        char cmddata[TEC_EFFILEGETSIZE]={0};
+        cmddata[0]= TECMD_EFFileGetSize;
+        memcpy(&cmddata[1],&hFile,sizeof(RTFILE));
+        
+        int sendret = send(sockClient, cmddata, TEC_EFFILEGETSIZE , 0);
+
+        if(sendret != TEC_EFFILEGETSIZE)
+            break;
+        int tmpRecvLen = 0;
+        int curLen = 1;
+        char recvdata[TEA_EFFILEGETSIZE]={0};        
+        while(tmpRecvLen < TEA_EFFILEGETSIZE && curLen >0){
+            curLen =  recv(sockClient,recvdata+tmpRecvLen,TEA_EFFILEGETSIZE-tmpRecvLen,0);
+            tmpRecvLen += curLen;
+        }
+        if(recvdata[0]!= TECMD_EFFileGetSize)
+            break;
+        uint64_t filesize = 0;
+        memcpy(&filesize,&recvdata[1],sizeof(uint64_t));
+        if(pcbSize){
+            *pcbSize = filesize;
+        }
+        rc = VINF_SUCCESS ;
+                    
+    }while(0);
+ #else
     struct exfat_node * pnode = (struct exfat_node *)hFile;
     *pcbSize = pnode->size;
-    return  VINF_SUCCESS;
-#if 0
-    /*
-     * GetFileSize works for most handles.
-     */
-    ULARGE_INTEGER  Size;
-    Size.LowPart = GetFileSize((HANDLE)RTFileToNative(hFile), &Size.HighPart);
-    if (Size.LowPart != INVALID_FILE_SIZE)
-    {
-        *pcbSize = Size.QuadPart;
-        return VINF_SUCCESS;
-    }
-    int rc = RTErrConvertFromWin32(GetLastError());
-
-    /*
-     * Could it be a volume or a disk?
-     */
-    DISK_GEOMETRY   DriveGeo;
-    DWORD           cbDriveGeo;
-    if (DeviceIoControl((HANDLE)RTFileToNative(hFile),
-                        IOCTL_DISK_GET_DRIVE_GEOMETRY, NULL, 0,
-                        &DriveGeo, sizeof(DriveGeo), &cbDriveGeo, NULL))
-    {
-        if (   DriveGeo.MediaType == FixedMedia
-            || DriveGeo.MediaType == RemovableMedia)
-        {
-            *pcbSize = DriveGeo.Cylinders.QuadPart
-                     * DriveGeo.TracksPerCylinder
-                     * DriveGeo.SectorsPerTrack
-                     * DriveGeo.BytesPerSector;
-
-            GET_LENGTH_INFORMATION  DiskLenInfo;
-            DWORD                   Ignored;
-            if (DeviceIoControl((HANDLE)RTFileToNative(hFile),
-                                IOCTL_DISK_GET_LENGTH_INFO, NULL, 0,
-                                &DiskLenInfo, sizeof(DiskLenInfo), &Ignored, (LPOVERLAPPED)NULL))
-            {
-                /* IOCTL_DISK_GET_LENGTH_INFO is supported -- override cbSize. */
-                *pcbSize = DiskLenInfo.Length.QuadPart;
-            }
-            return VINF_SUCCESS;
-        }
-    }
-
-    /*
-     * Return the GetFileSize result if not a volume/disk.
-     */
-    return rc;
 #endif
+    return  VINF_SUCCESS;
 }
 
 
@@ -1037,28 +1007,37 @@ RTR3DECL(bool) EFFileIsValid(RTFILE hFile)
 {
     if (hFile != NIL_RTFILE)
     {
-#if 0        
-        DWORD dwType = GetFileType((HANDLE)RTFileToNative(hFile));
-        switch (dwType)
-        {
-            case FILE_TYPE_CHAR:
-            case FILE_TYPE_DISK:
-            case FILE_TYPE_PIPE:
-            case FILE_TYPE_REMOTE:
-                return true;
+ #if USE_TCP
+    EXFAT_CHECK(false) ;
+    int rc = VERR_INVALID_HANDLE;
+    do{
+        char cmddata[TEC_EFFILEISVALID]={0};
+        cmddata[0]= TECMD_EFFileIsValid;
+        memcpy(&cmddata[1],&hFile,sizeof(RTFILE));
+        
+        int sendret = send(sockClient, cmddata, TEC_EFFILEISVALID , 0);
 
-            case FILE_TYPE_UNKNOWN:
-                if (GetLastError() == NO_ERROR)
-                    return true;
-                break;
-
-            default:
-                break;
+        if(sendret != TEC_EFFILEISVALID)
+            break;
+        int tmpRecvLen = 0;
+        int curLen = 1;
+        char recvdata[TEA_EFFILEISVALID]={0};        
+        while(tmpRecvLen < TEA_EFFILEISVALID && curLen >0){
+            curLen =  recv(sockClient,recvdata+tmpRecvLen,TEA_EFFILEISVALID-tmpRecvLen,0);
+            tmpRecvLen += curLen;
         }
-#endif
+        if(recvdata[0]!= TECMD_EFFileIsValid)
+            break;
+        int retvalue = 0;
+        memcpy(&retvalue,&recvdata[1],sizeof(int));
+        return (retvalue!=0);
+                    
+    }while(0);
+ #else        
         struct exfat_node * pnode = (struct exfat_node *)hFile;
         if(pnode->is_unlinked)
             return false;
+#endif            
         return true;
     }
     return false;
@@ -1071,35 +1050,6 @@ RTR3DECL(bool) EFFileIsValid(RTFILE hFile)
 RTR3DECL(int) EFFileLock(RTFILE hFile, unsigned fLock, int64_t offLock, uint64_t cbLock)
 {
     return VERR_NOT_IMPLEMENTED;
-#if 0
-    Assert(offLock >= 0);
-
-    /* Check arguments. */
-    if (fLock & ~RTFILE_LOCK_MASK)
-    {
-        AssertMsgFailed(("Invalid fLock=%08X\n", fLock));
-        return VERR_INVALID_PARAMETER;
-    }
-
-    /* Prepare flags. */
-    Assert(RTFILE_LOCK_WRITE);
-    DWORD dwFlags = (fLock & RTFILE_LOCK_WRITE) ? LOCKFILE_EXCLUSIVE_LOCK : 0;
-    Assert(RTFILE_LOCK_WAIT);
-    if (!(fLock & RTFILE_LOCK_WAIT))
-        dwFlags |= LOCKFILE_FAIL_IMMEDIATELY;
-
-    /* Windows structure. */
-    OVERLAPPED Overlapped;
-    memset(&Overlapped, 0, sizeof(Overlapped));
-    Overlapped.Offset = LOW_DWORD(offLock);
-    Overlapped.OffsetHigh = HIGH_DWORD(offLock);
-
-    /* Note: according to Microsoft, LockFileEx API call is available starting from NT 3.5 */
-    if (LockFileEx((HANDLE)RTFileToNative(hFile), dwFlags, 0, LOW_DWORD(cbLock), HIGH_DWORD(cbLock), &Overlapped))
-        return VINF_SUCCESS;
-
-    return RTErrConvertFromWin32(GetLastError());
-#endif    
 }
 
 
@@ -1107,32 +1057,6 @@ RTR3DECL(int) EFFileChangeLock(RTFILE hFile, unsigned fLock, int64_t offLock, ui
 {
     Assert(offLock >= 0);
     return VERR_NOT_IMPLEMENTED;
-#if 0    
-    /* Check arguments. */
-    if (fLock & ~RTFILE_LOCK_MASK)
-    {
-        AssertMsgFailed(("Invalid fLock=%08X\n", fLock));
-        return VERR_INVALID_PARAMETER;
-    }
-
-    /* Remove old lock. */
-    int rc = RTFileUnlock(hFile, offLock, cbLock);
-    if (RT_FAILURE(rc))
-        return rc;
-
-    /* Set new lock. */
-    rc = RTFileLock(hFile, fLock, offLock, cbLock);
-    if (RT_SUCCESS(rc))
-        return rc;
-
-    /* Try to restore old lock. */
-    unsigned fLockOld = (fLock & RTFILE_LOCK_WRITE) ? fLock & ~RTFILE_LOCK_WRITE : fLock | RTFILE_LOCK_WRITE;
-    rc = RTFileLock(hFile, fLockOld, offLock, cbLock);
-    if (RT_SUCCESS(rc))
-        return VERR_FILE_LOCK_VIOLATION;
-    else
-        return VERR_FILE_LOCK_LOST;
-#endif        
 }
 
 
@@ -1140,14 +1064,6 @@ RTR3DECL(int) EFFileUnlock(RTFILE hFile, int64_t offLock, uint64_t cbLock)
 {
     Assert(offLock >= 0);
     return VERR_NOT_IMPLEMENTED;
-#if 0    
-    if (UnlockFile((HANDLE)RTFileToNative(hFile),
-                   LOW_DWORD(offLock), HIGH_DWORD(offLock),
-                   LOW_DWORD(cbLock), HIGH_DWORD(cbLock)))
-        return VINF_SUCCESS;
-
-    return RTErrConvertFromWin32(GetLastError());
-#endif    
 }
 
 
@@ -1162,95 +1078,54 @@ RTR3DECL(int) EFFileQueryInfo(RTFILE hFile, PRTFSOBJINFO pObjInfo, RTFSOBJATTRAD
         AssertMsgFailed(("Invalid hFile=%RTfile\n", hFile));
         return VERR_INVALID_PARAMETER;
     }
-    return VERR_NOT_IMPLEMENTED;
-#if 0    
-    if (!pObjInfo)
-    {
-        AssertMsgFailed(("Invalid pObjInfo=%p\n", pObjInfo));
-        return VERR_INVALID_PARAMETER;
-    }
-    if (    enmAdditionalAttribs < RTFSOBJATTRADD_NOTHING
-        ||  enmAdditionalAttribs > RTFSOBJATTRADD_LAST)
-    {
-        AssertMsgFailed(("Invalid enmAdditionalAttribs=%p\n", enmAdditionalAttribs));
-        return VERR_INVALID_PARAMETER;
-    }
+ #if USE_TCP
+    EXFAT_CHECK(VERR_GENERAL_FAILURE) ;
+    int rc = VERR_INVALID_HANDLE;
+    do{
+        char cmddata[TEC_EFFILEQUERYINFO]={0};
+        cmddata[0]= TECMD_EFFileQueryInfo;
+        memcpy(&cmddata[1],&hFile,sizeof(RTFILE));
+        
+        int sendret = send(sockClient, cmddata, TEC_EFFILEQUERYINFO , 0);
 
-    /*
-     * Query file info.
-     */
-    BY_HANDLE_FILE_INFORMATION Data;
-    if (!GetFileInformationByHandle((HANDLE)RTFileToNative(hFile), &Data))
-    {
-        DWORD dwErr = GetLastError();
-        /* Only return if we *really* don't have a valid handle value,
-         * everything else is fine here ... */
-        if (dwErr == ERROR_INVALID_HANDLE)
-            return RTErrConvertFromWin32(dwErr);
-        RT_ZERO(Data);
-        Data.dwFileAttributes = RTFS_DOS_NT_DEVICE;
-    }
+        if(sendret != TEC_EFFILEQUERYINFO)
+            break;
+        int tmpRecvLen = 0;
+        int curLen = 1;
+        char recvdata[TEA_EFFILEQUERYINFO]={0};        
+        while(tmpRecvLen < TEA_EFFILEQUERYINFO && curLen >0){
+            curLen =  recv(sockClient,recvdata+tmpRecvLen,TEA_EFFILEQUERYINFO-tmpRecvLen,0);
+            tmpRecvLen += curLen;
+        }
+        if(recvdata[0]!= TECMD_EFFileQueryInfo)
+            break;
+        if(pObjInfo){
 
-    /*
-     * Setup the returned data.
-     */
-    pObjInfo->cbObject    = ((uint64_t)Data.nFileSizeHigh << 32)
-                          |  (uint64_t)Data.nFileSizeLow;
-    pObjInfo->cbAllocated = pObjInfo->cbObject;
+            memcpy(pObjInfo,&recvdata[1],sizeof(EFFSOBJINFO));
+            pObjInfo->ChangeTime  = pObjInfo->ModificationTime;
 
-    Assert(sizeof(uint64_t) == sizeof(Data.ftCreationTime));
-    RTTimeSpecSetNtTime(&pObjInfo->BirthTime,         *(uint64_t *)&Data.ftCreationTime);
-    RTTimeSpecSetNtTime(&pObjInfo->AccessTime,        *(uint64_t *)&Data.ftLastAccessTime);
-    RTTimeSpecSetNtTime(&pObjInfo->ModificationTime,  *(uint64_t *)&Data.ftLastWriteTime);
+            pObjInfo->Attr.fMode  = RTFS_TYPE_FILE;
+            pObjInfo->Attr.enmAdditional = RTFSOBJATTRADD_NOTHING;
+        }
+        return VINF_SUCCESS;
+                    
+    }while(0);
+ #else    
+    struct exfat_node * pnode = (struct exfat_node *)hFile;
+    pObjInfo->cbObject    = pnode->size;
+    pObjInfo->cbAllocated = ROUND_UP(pnode->size, CLUSTER_SIZE(*ef->sb)) ;
+    pObjInfo->AccessTime.i64NanosecondsRelativeToUnixEpoch  = pnode->atime;
+    pObjInfo->BirthTime.i64NanosecondsRelativeToUnixEpoch   = pnode->mtime;
+    pObjInfo->ModificationTime.i64NanosecondsRelativeToUnixEpoch = pnode->mtime;
+    
     pObjInfo->ChangeTime  = pObjInfo->ModificationTime;
 
-    pObjInfo->Attr.fMode  = rtFsModeFromDos((Data.dwFileAttributes << RTFS_DOS_SHIFT) & RTFS_DOS_MASK_NT, "", 0);
-
-    /*
-     * Requested attributes (we cannot provide anything actually).
-     */
-    switch (enmAdditionalAttribs)
-    {
-        case RTFSOBJATTRADD_NOTHING:
-            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_NOTHING;
-            break;
-
-        case RTFSOBJATTRADD_UNIX:
-            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_UNIX;
-            pObjInfo->Attr.u.Unix.uid             = ~0U;
-            pObjInfo->Attr.u.Unix.gid             = ~0U;
-            pObjInfo->Attr.u.Unix.cHardlinks      = Data.nNumberOfLinks ? Data.nNumberOfLinks : 1;
-            pObjInfo->Attr.u.Unix.INodeIdDevice   = 0; /** @todo Use the volume serial number (see GetFileInformationByHandle). */
-            pObjInfo->Attr.u.Unix.INodeId         = 0; /** @todo Use the fileid (see GetFileInformationByHandle). */
-            pObjInfo->Attr.u.Unix.fFlags          = 0;
-            pObjInfo->Attr.u.Unix.GenerationId    = 0;
-            pObjInfo->Attr.u.Unix.Device          = 0;
-            break;
-
-        case RTFSOBJATTRADD_UNIX_OWNER:
-            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_UNIX_OWNER;
-            pObjInfo->Attr.u.UnixOwner.uid        = ~0U;
-            pObjInfo->Attr.u.UnixOwner.szName[0]  = '\0'; /** @todo return something sensible here. */
-            break;
-
-        case RTFSOBJATTRADD_UNIX_GROUP:
-            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_UNIX_GROUP;
-            pObjInfo->Attr.u.UnixGroup.gid        = ~0U;
-            pObjInfo->Attr.u.UnixGroup.szName[0]  = '\0';
-            break;
-
-        case RTFSOBJATTRADD_EASIZE:
-            pObjInfo->Attr.enmAdditional          = RTFSOBJATTRADD_EASIZE;
-            pObjInfo->Attr.u.EASize.cb            = 0;
-            break;
-
-        default:
-            AssertMsgFailed(("Impossible!\n"));
-            return VERR_INTERNAL_ERROR;
-    }
-
+    pObjInfo->Attr.fMode  = RTFS_TYPE_FILE;
+    pObjInfo->Attr.enmAdditional = RTFSOBJATTRADD_NOTHING;
     return VINF_SUCCESS;
 #endif
+    return VERR_INVALID_PARAMETER;
+
 }
 
 
@@ -1260,33 +1135,7 @@ RTR3DECL(int) EFFileSetTimes(RTFILE hFile, PCRTTIMESPEC pAccessTime, PCRTTIMESPE
 
     if (!pAccessTime && !pModificationTime && !pBirthTime)
         return VINF_SUCCESS;    /* NOP */
-    return VERR_NOT_IMPLEMENTED;
-#if 0    
-    FILETIME    CreationTimeFT;
-    PFILETIME   pCreationTimeFT = NULL;
-    if (pBirthTime)
-        pCreationTimeFT = RTTimeSpecGetNtFileTime(pBirthTime, &CreationTimeFT);
-
-    FILETIME    LastAccessTimeFT;
-    PFILETIME   pLastAccessTimeFT = NULL;
-    if (pAccessTime)
-        pLastAccessTimeFT = RTTimeSpecGetNtFileTime(pAccessTime, &LastAccessTimeFT);
-
-    FILETIME    LastWriteTimeFT;
-    PFILETIME   pLastWriteTimeFT = NULL;
-    if (pModificationTime)
-        pLastWriteTimeFT = RTTimeSpecGetNtFileTime(pModificationTime, &LastWriteTimeFT);
-
-    int rc = VINF_SUCCESS;
-    if (!SetFileTime((HANDLE)RTFileToNative(hFile), pCreationTimeFT, pLastAccessTimeFT, pLastWriteTimeFT))
-    {
-        DWORD Err = GetLastError();
-        rc = RTErrConvertFromWin32(Err);
-        Log(("RTFileSetTimes(%RTfile, %p, %p, %p, %p): SetFileTime failed with lasterr %d (%Rrc)\n",
-             hFile, pAccessTime, pModificationTime, pChangeTime, pBirthTime, Err, rc));
-    }
-    return rc;
-#endif    
+    return VERR_NOT_IMPLEMENTED;   
 }
 
 
@@ -1298,24 +1147,7 @@ RTR3DECL(int) EFFileSetTimes(RTFILE hFile, PCRTTIMESPEC pAccessTime, PCRTTIMESPE
 
 RTR3DECL(int) EFFileSetMode(RTFILE hFile, RTFMODE fMode)
 {
-#if 0
-    /*
-     * Normalize the mode and call the API.
-     */
-    fMode = rtFsModeNormalize(fMode, NULL, 0);
-    if (!rtFsModeIsValid(fMode))
-        return VERR_INVALID_PARAMETER;
 
-    ULONG FileAttributes = (fMode & RTFS_DOS_MASK) >> RTFS_DOS_SHIFT;
-    int Err = efFileNativeSetAttributes((HANDLE)hFile, FileAttributes);
-    if (Err != ERROR_SUCCESS)
-    {
-        int rc = RTErrConvertFromWin32(Err);
-        Log(("RTFileSetMode(%RTfile, %RTfmode): EFtFileNativeSetAttributes (0x%08X) failed with err %d (%Rrc)\n",
-             hFile, fMode, FileAttributes, Err, rc));
-        return rc;
-    }
-#endif
     return VINF_SUCCESS;
 }
 
@@ -1331,24 +1163,40 @@ RTR3DECL(int) EFFileQueryFsSizes(RTFILE hFile, PRTFOFF pcbTotal, RTFOFF *pcbFree
 
 RTR3DECL(int) EFFileDelete(const char *pszFilename)
 {
-#if 0    
-    PRTUTF16 pwszFilename;
-    int rc = RTStrToUtf16(pszFilename, &pwszFilename);
-    if (RT_SUCCESS(rc))
-    {
-        if (!DeleteFileW(pwszFilename))
-            rc = RTErrConvertFromWin32(GetLastError());
-        RTUtf16Free(pwszFilename);
-    }
-    return rc;
-#endif
+ #if USE_TCP
+    EXFAT_CHECK(VERR_GENERAL_FAILURE) ;
+    int rc = VERR_GENERAL_FAILURE;
+    do{
+        char cmddata[TEC_EFFILEDELETE]={0};
+        cmddata[0]= TECMD_EFFileDelete;
+        strcpy(&cmddata[1] ,pszFilename);
+        
+        int sendret = send(sockClient, cmddata, TEC_EFFILEDELETE , 0);
+
+        if(sendret != TEC_EFFILEDELETE)
+            break;
+        int tmpRecvLen = 0;
+        int curLen = 1;
+        char recvdata[TEA_EFFILEDELETE]={0};        
+        while(tmpRecvLen < TEA_EFFILEDELETE && curLen >0){
+            curLen =  recv(sockClient,recvdata+tmpRecvLen,TEA_EFFILEDELETE-tmpRecvLen,0);
+            tmpRecvLen += curLen;
+        }
+        if(recvdata[0]!= TECMD_EFFileDelete)
+            break;
+        memcpy(&rc,&recvdata[1],sizeof(rc));
+        return rc;
+    }while(0);
+ #else    
     struct exfat_node * pnode ;
     if(exfat_lookup(ef,&pnode,pszFilename)==0){
         exfat_unlink(ef,pnode);
+        exfat_cleanup_node(ef,pnode);
         exfat_put_node(ef,pnode);
         return VINF_SUCCESS;
     }
-    return VERR_GENERAL_FAILURE;
+#endif
+    return VERR_NOT_IMPLEMENTED;
 }
 
 
@@ -1364,15 +1212,10 @@ RTDECL(int) EFFileRename(const char *pszSrc, const char *pszDst, unsigned fRenam
     /*
      * Hand it on to the worker.
      */
-#if 0    
-    int rc = rtPathWin32MoveRename(pszSrc, pszDst,
-                                   fRename & RTPATHRENAME_FLAGS_REPLACE ? MOVEFILE_REPLACE_EXISTING : 0,
-                                   RTFS_TYPE_FILE);
-#endif
-    int rc = exfat_rename(ef, pszSrc, pszDst);
-    LogFlow(("RTFileMove(%p:{%s}, %p:{%s}, %#x): returns %Rrc\n",
-             pszSrc, pszSrc, pszDst, pszDst, fRename, rc));
-    return rc;
+    //int rc = exfat_rename(ef, pszSrc, pszDst);
+    //LogFlow(("RTFileMove(%p:{%s}, %p:{%s}, %#x): returns %Rrc\n",
+    //         pszSrc, pszSrc, pszDst, pszDst, fRename, rc));
+    return VERR_NOT_IMPLEMENTED;
 
 }
 
@@ -1385,20 +1228,7 @@ RTDECL(int) EFFileMove(const char *pszSrc, const char *pszDst, unsigned fMove)
     AssertMsgReturn(VALID_PTR(pszSrc), ("%p\n", pszSrc), VERR_INVALID_POINTER);
     AssertMsgReturn(VALID_PTR(pszDst), ("%p\n", pszDst), VERR_INVALID_POINTER);
     AssertMsgReturn(!(fMove & ~RTFILEMOVE_FLAGS_REPLACE), ("%#x\n", fMove), VERR_INVALID_PARAMETER);
-#if 0
-    /*
-     * Hand it on to the worker.
-     */
-    int rc = rtPathWin32MoveRename(pszSrc, pszDst,
-                                   fMove & RTFILEMOVE_FLAGS_REPLACE
-                                   ? MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING
-                                   : MOVEFILE_COPY_ALLOWED,
-                                   RTFS_TYPE_FILE);
 
-    LogFlow(("RTFileMove(%p:{%s}, %p:{%s}, %#x): returns %Rrc\n",
-             pszSrc, pszSrc, pszDst, pszDst, fMove, rc));
-    return rc;
-#endif
     return VERR_NOT_IMPLEMENTED;
 }
 

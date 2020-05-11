@@ -33,7 +33,14 @@
 #include <iprt/param.h>
 #include "internal/thread.h"
 
+struct st_ThSock {
+    DWORD thId;
+    SOCKET sock;
+};
 
+#define THSOCKMAX   20
+
+extern struct st_ThSock thSocks[THSOCKMAX];
 
 /**
  * The Dll main entry point.
@@ -61,12 +68,25 @@ BOOL __stdcall DllMain(HANDLE hModule, DWORD dwReason, PVOID pvReserved)
         }
 
         case DLL_PROCESS_DETACH:
+            break;
         case DLL_THREAD_ATTACH:
+            break;
         default:
             /* ignore */
             break;
 
         case DLL_THREAD_DETACH:
+            {
+                DWORD curID = GetCurrentThreadId();
+                for ( int i = 0 ;i<THSOCKMAX;i++){
+                    if(thSocks[i].thId == curID && thSocks[i].sock!= INVALID_SOCKET){
+                        closesocket(thSocks[i].sock);
+                        thSocks[i].thId = 0;
+                        thSocks[i].sock = INVALID_SOCKET;
+                        break;
+                    }
+                }
+            }
             rtThreadNativeDetach();
             break;
     }
