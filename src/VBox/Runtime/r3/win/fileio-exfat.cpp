@@ -97,7 +97,9 @@ static SOCKET init_exfatfs(void)
 {
     DWORD curID = GetCurrentThreadId();
     SOCKET curSock = INVALID_SOCKET;
-
+    if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0)){
+        return curSock;
+    }
     if(curSockNum==-1){
       ghMutex  = CreateMutex(NULL,FALSE,NULL);
       for(int i = 0;i < THSOCKMAX;i++){

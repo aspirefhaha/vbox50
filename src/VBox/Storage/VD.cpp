@@ -3939,7 +3939,7 @@ static bool sCheckVDI(PVBOXHDD phdd,char * pszLocation)
 			char tmpext[32]={0};
 			size_t leftlen = strlen(dotpos);
 			strcpy(tmpext,dotpos);
-			for(int i = 0;i<leftlen;i++){
+			for(size_t i = 0;i<leftlen;i++){
 				tmpext[i] = tolower(tmpext[i]);
 			}
 			if(strcmp(tmpext,".vdi")==0){
@@ -3953,7 +3953,7 @@ static bool sCheckVDI(PVBOXHDD phdd,char * pszLocation)
 			char tmpext[32]={0};
 			size_t leftlen = strlen(dotpos);
 			strcpy(tmpext,dotpos);
-			for(int i = 0;i<leftlen;i++){
+			for(size_t i = 0;i<leftlen;i++){
 				tmpext[i] = tolower(tmpext[i]);
 			}
 			if(strcmp(tmpext,".vdi")==0){
