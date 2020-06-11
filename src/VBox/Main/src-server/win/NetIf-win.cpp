@@ -1005,7 +1005,7 @@ static int netIfListHostAdapters(std::list<ComObjPtr<HostNetworkInterface> > &li
                        VBOX_APP_NAME,
                        10000,
                        &lpszApp);
-    Assert(hr == S_OK);
+//    Assert(hr == S_OK);
     if (hr == S_OK)
     {
         hr = pNc->EnumComponents(&GUID_DEVCLASS_NET, &pEnumComponent);

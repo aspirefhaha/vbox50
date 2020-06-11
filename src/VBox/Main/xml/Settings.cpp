@@ -6144,7 +6144,12 @@ void MachineConfigFile::write(const com::Utf8Str &strFilename)
 
         // now go write the XML
         xml::XmlFileWriter writer(*m->pDoc);
-        writer.write(m->strFilename.c_str(), true /*fSafe*/);
+		if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+			writer.write(m->strFilename.c_str(), true /*fSafe*/);
+		}
+		else{
+			writer.write(m->strFilename.c_str(),false /*fSafe*/);
+		}
 
         m->fFileExists = true;
         clearDocument();
