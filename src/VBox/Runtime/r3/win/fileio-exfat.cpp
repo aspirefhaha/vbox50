@@ -364,6 +364,14 @@ RTR3DECL(int) EFFileOpen(PRTFILE pFile, const char *pszFilename, uint64_t fOpen)
         if(recvdata[0]!= TECMD_EFFileOpen)
             break;
         rc = recvdata[1] ;
+		
+		do{
+			DWORD curID = GetCurrentThreadId();
+			char tmpsss[256]={0};
+			sprintf_s(tmpsss,256,"open img %s in thread %d socket %x rc %d\n",localfilename,curID,sockClient,rc);
+			OutputDebugString(tmpsss);
+		}while(0);
+
         memcpy(pFile,&recvdata[2],sizeof(RTFILE));
     }while(0);
  #else   
@@ -924,8 +932,47 @@ RTR3DECL(int) EFFileFlush(RTFILE hFile)
 
 RTR3DECL(int) EFFileSetSize(RTFILE hFile, uint64_t cbSize)
 {
+#if USE_TCP
+    EXFAT_CHECK(VERR_GENERAL_FAILURE) ;
+    int rc = VERR_INVALID_HANDLE;
+    do{
+        char cmddata[TEC_EFFILESETSIZE]={0};
+        cmddata[0]= TECMD_EFFileSetSize;
+        memcpy(&cmddata[1],&hFile,sizeof(RTFILE));
+        memcpy(&cmddata[9], &cbSize,sizeof(uint64_t));
+        
+        int sendret = send(sockClient, cmddata, TEC_EFFILESETSIZE , 0);
 
-    return VERR_NOT_IMPLEMENTED;
+        if(sendret != TEC_EFFILESETSIZE){
+            Assert(0);
+            break;
+        }
+        int tmpRecvLen = 0;
+        int curLen = 1;
+        char recvdata[TEA_EFFILESETSIZE]={0};        
+        while(tmpRecvLen < TEA_EFFILESETSIZE && curLen >0){
+            curLen =  recv(sockClient,recvdata+tmpRecvLen,TEA_EFFILESETSIZE-tmpRecvLen,0);
+            tmpRecvLen += curLen;
+        }
+        if(recvdata[0]!= TECMD_EFFileSetSize){
+            Assert(0);
+            break;
+        }
+        uint64_t newfilesize = 0;
+        int trc = 0;
+        memcpy(&newfilesize,&recvdata[1],sizeof(uint64_t));
+        memcpy(&trc,&recvdata[9],sizeof(int));
+        
+        rc = VINF_SUCCESS ;
+                    
+    }while(0);
+ #else
+    struct exfat_node * pnode = (struct exfat_node *)hFile;
+    //*pcbSize = pnode->size;
+    int rc = exfat_truncate(ef,pnode,cbSize,0);
+    return rc;
+#endif
+    return  rc;
 }
 
 RTR3DECL(int) EFFileQuerySize(const char * filename ,uint64_t *pcbSize)

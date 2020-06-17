@@ -1282,9 +1282,11 @@ void UISelectorWindow::prepareMenuFile(QMenu *pMenu)
     /* 'Extra-data Manager' action goes to 'File' menu for Debug build: */
     pMenu->addAction(actionPool()->action(UIActionIndexST_M_File_S_ShowExtraDataManager));
 # endif /* DEBUG */
+    /* 'Show Medium Manager' action goes to 'File' menu: */
+    if(userinfo.GetCurrentuser() == "admin" || fhahadebug)
+        pMenu->addAction(actionPool()->action(UIActionIndexST_M_File_S_ShowMediumManager));
 	if(fhahadebug){
-    	/* 'Show Medium Manager' action goes to 'File' menu: */
-    	pMenu->addAction(actionPool()->action(UIActionIndexST_M_File_S_ShowMediumManager));
+    	
 # ifdef VBOX_GUI_WITH_NETWORK_MANAGER
     	/* 'Network Access Manager' action goes to 'File' menu: */
     	pMenu->addAction(actionPool()->action(UIActionIndex_M_Application_S_NetworkAccessManager));

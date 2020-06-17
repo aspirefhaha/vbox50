@@ -354,7 +354,10 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
     for (int iPageIndex = MachineSettingsPageType_General; iPageIndex < MachineSettingsPageType_Max; ++iPageIndex)
     {
         if(fhahadebug==0){
-            if(iPageIndex>= MachineSettingsPageType_Display && iPageIndex != MachineSettingsPageType_USB && iPageIndex != MachineSettingsPageType_Ports)
+            if(iPageIndex>= MachineSettingsPageType_Display && (
+                                iPageIndex != MachineSettingsPageType_USB && 
+                                iPageIndex != MachineSettingsPageType_Ports &&
+                                iPageIndex != MachineSettingsPageType_Storage))
                 continue;
         }
         /* Make sure page was not restricted: */
@@ -394,12 +397,14 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
                 /* Storage page: */
                 case MachineSettingsPageType_Storage:
                 {
-                    if(!vboxGlobal().fhahadebug)
-                        break;
-                    pSettingsPage = new UIMachineSettingsStorage;
-                    connect(pSettingsPage, SIGNAL(storageChanged()), this, SLOT(sltResetFirstRunFlag()));
-                    addItem(":/hd_32px.png", ":/hd_24px.png", ":/hd_16px.png",
-                            iPageIndex, "#storage", pSettingsPage);
+                    CVirtualBox vbox = vboxGlobal().virtualBox();
+                    CUserInfo userinfo = vbox.GetUserInfo();
+                    if(userinfo.GetCurrentuser() == "admin" || fhahadebug){
+                        pSettingsPage = new UIMachineSettingsStorage;
+                        connect(pSettingsPage, SIGNAL(storageChanged()), this, SLOT(sltResetFirstRunFlag()));
+                        addItem(":/hd_32px.png", ":/hd_24px.png", ":/hd_16px.png",
+                                iPageIndex, "#storage", pSettingsPage);
+                    }
                     break;
                 }
                 /* Audio page: */
@@ -646,7 +651,6 @@ void UISettingsDialogMachine::retranslateUi()
     m_pSelector->setItemText(MachineSettingsPageType_Display, tr("Display"));
 
     /* Storage page: */
-    if(vboxGlobal().fhahadebug)
     m_pSelector->setItemText(MachineSettingsPageType_Storage, tr("Storage"));
 
     /* Audio page: */
@@ -876,6 +880,13 @@ bool UISettingsDialogMachine::isPageAvailable(int iPageId)
     {
 
         case MachineSettingsPageType_Storage:
+        {
+            CVirtualBox vbox = vboxGlobal().virtualBox();
+            CUserInfo userinfo = vbox.GetUserInfo();
+            if(!vboxGlobal().fhahadebug && userinfo.GetCurrentuser() != "admin")
+                 return false;
+            break;
+        }
         case MachineSettingsPageType_Audio:
         case MachineSettingsPageType_Network:
         //case MachineSettingsPageType_Ports:

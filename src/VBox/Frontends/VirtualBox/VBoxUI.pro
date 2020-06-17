@@ -51,7 +51,9 @@ FORMS = \
     src/settings/machine/UIMachineSettingsSFDetails.ui \
     src/settings/machine/UIMachineSettingsInterface.ui \
     src/widgets/UIApplianceEditorWidget.ui \
-    src/selector/VBoxSnapshotsWgt.ui
+    src/selector/VBoxSnapshotsWgt.ui 
+	#\
+	#src/effilelist.ui
 
 TRANSLATIONS = \
 	nls/VirtualBox_bg.ts \

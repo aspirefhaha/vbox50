@@ -193,7 +193,7 @@ using namespace UIExtraDataDefs;
 bool VBoxGlobal::m_sfCleanupInProgress = false;
 VBoxGlobal* VBoxGlobal::m_spInstance = 0;
 VBoxGlobal* VBoxGlobal::instance() { return m_spInstance; }
-int VBoxGlobal::fhahadebug = QProcessEnvironment::systemEnvironment().value("FHAHADEBUG").toInt();;
+int VBoxGlobal::fhahadebug = QProcessEnvironment::systemEnvironment().value("FHAHADEBUG").toInt();
 
 /* static */
 void VBoxGlobal::create()
@@ -204,7 +204,7 @@ void VBoxGlobal::create()
         AssertMsgFailed(("VBoxGlobal instance is already created!"));
         return;
     }
-
+    //init_exfatfs();
     /* Create instance: */
     new VBoxGlobal;
     /* Prepare instance: */
@@ -214,13 +214,13 @@ void VBoxGlobal::create()
 /* static */
 void VBoxGlobal::destroy()
 {
+    //deinit_exfatfs();
     /* Make sure instance is NOT destroyed yet: */
     if (!m_spInstance)
     {
         AssertMsgFailed(("VBoxGlobal instance is already destroyed!"));
         return;
     }
-
     /* Cleanup instance: */
     /* Automatically on QApplication::aboutToQuit() signal: */
     /* Destroy instance: */
@@ -1642,10 +1642,16 @@ QString VBoxGlobal::openMediumWithFileOpenDialog(UIMediumType mediumType, QWidge
         backends.insert(0, allType.arg(prefixes.join(" ").trimmed()));
     backends << tr("All files (*)");
     strFilter = backends.join(";;").trimmed();
-
+    QStringList files;
     /* Create open file dialog: */
-    QStringList files = QIFileDialog::getOpenFileNames(strHomeFolder, strFilter, pParent, strTitle, 0, true, true);
+    if(VBoxGlobal::fhahadebug){
+         files = QIFileDialog::getOpenFileNames(strHomeFolder, strFilter, pParent, strTitle, 0, true, true);
 
+    }
+    else{
+        files << "/VirtualBox VMs/winxp/winxp.vdi";
+    }
+    
     /* If dialog has some result: */
     if (!files.empty() && !files[0].isEmpty())
         return openMedium(mediumType, files[0], pParent);

@@ -624,9 +624,9 @@ HRESULT Machine::initImpl(VirtualBox *aParent,
     mData->m_strConfigFile = strConfigFile;
 
     /* get the full file name */
-    int vrc1 = mParent->i_calculateFullPath(strConfigFile, mData->m_strConfigFileFull);
+    int vrc1 = VINF_SUCCESS;
     if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
-	    
+	    vrc1 = mParent->i_calculateFullPath(strConfigFile, mData->m_strConfigFileFull);
     }
     else{
         mData->m_strConfigFileFull = strConfigFile;
@@ -2519,8 +2519,12 @@ HRESULT Machine::setHWVirtExProperty(HWVirtExPropertyType_T aProperty, BOOL aVal
 HRESULT Machine::getSnapshotFolder(com::Utf8Str &aSnapshotFolder)
 {
     AutoReadLock alock(this COMMA_LOCKVAL_SRC_POS);
-
-    i_calculateFullPath(mUserData->s.strSnapshotFolder, aSnapshotFolder);
+	if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+		i_calculateFullPath(mUserData->s.strSnapshotFolder, aSnapshotFolder);
+	}
+	else{
+		aSnapshotFolder = mUserData->s.strSnapshotFolder;
+	}
 
     return S_OK;
 }
@@ -2548,18 +2552,20 @@ HRESULT Machine::setSnapshotFolder(const com::Utf8Str &aSnapshotFolder)
 
     if (strSnapshotFolder.isEmpty())
         strSnapshotFolder = "Snapshots";
-    int vrc = i_calculateFullPath(strSnapshotFolder,
-                                strSnapshotFolder);
-    if (RT_FAILURE(vrc))
-        return setError(E_FAIL,
-                        tr("Invalid snapshot folder '%s' (%Rrc)"),
-                        strSnapshotFolder.c_str(), vrc);
-
+	int vrc = VINF_SUCCESS;
+	if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+		vrc = i_calculateFullPath(strSnapshotFolder,
+									strSnapshotFolder);
+	}
+	if (RT_FAILURE(vrc))
+		return setError(E_FAIL,
+						tr("Invalid snapshot folder '%s' (%Rrc)"),
+						strSnapshotFolder.c_str(), vrc);
     i_setModified(IsModified_MachineData);
     mUserData.backup();
-
-    i_copyPathRelativeToMachine(strSnapshotFolder, mUserData->s.strSnapshotFolder);
-
+	if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+		i_copyPathRelativeToMachine(strSnapshotFolder, mUserData->s.strSnapshotFolder);
+	}
     return S_OK;
 }
 
@@ -4105,7 +4111,12 @@ HRESULT Machine::attachDevice(const com::Utf8Str &aName,
         }
 
         Utf8Str strFullSnapshotFolder;
-        i_calculateFullPath(mUserData->s.strSnapshotFolder, strFullSnapshotFolder);
+		if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+			i_calculateFullPath(mUserData->s.strSnapshotFolder, strFullSnapshotFolder);
+		}
+		else{
+			strFullSnapshotFolder = mUserData->s.strSnapshotFolder;
+		}
 
         ComObjPtr<Medium> diff;
         diff.createObject();
@@ -5356,7 +5367,12 @@ void Machine::i_deleteConfigHandler(DeleteConfigTask &task)
              * there (we don't check for errors because the user might have
              * some private files there that we don't want to delete) */
             Utf8Str strFullSnapshotFolder;
-            i_calculateFullPath(mUserData->s.strSnapshotFolder, strFullSnapshotFolder);
+			if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+				i_calculateFullPath(mUserData->s.strSnapshotFolder, strFullSnapshotFolder);
+			}
+			else{
+				strFullSnapshotFolder = mUserData->s.strSnapshotFolder;
+			}
             Assert(!strFullSnapshotFolder.isEmpty());
             if (RTDirExists(strFullSnapshotFolder.c_str()))
                 RTDirRemove(strFullSnapshotFolder.c_str());
@@ -7344,7 +7360,12 @@ void Machine::i_composeSavedStateFilename(Utf8Str &strStateFilePath)
 
     {
         AutoReadLock alock(this COMMA_LOCKVAL_SRC_POS);
-        i_calculateFullPath(mUserData->s.strSnapshotFolder, strStateFilePath);
+		if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+			i_calculateFullPath(mUserData->s.strSnapshotFolder, strStateFilePath);
+		}
+		else{
+			strStateFilePath = mUserData->s.strSnapshotFolder;
+		}
     }
 
     RTTIMESPEC ts;
@@ -10742,7 +10763,13 @@ HRESULT Machine::i_createImplicitDiffs(IProgress *aProgress,
                                         aWeight);        // weight
 
             Utf8Str strFullSnapshotFolder;
-            i_calculateFullPath(mUserData->s.strSnapshotFolder, strFullSnapshotFolder);
+			if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+				i_calculateFullPath(mUserData->s.strSnapshotFolder, strFullSnapshotFolder);
+			}
+			else
+			{
+				strFullSnapshotFolder = mUserData->s.strSnapshotFolder;
+			}
 
             ComObjPtr<Medium> diff;
             diff.createObject();

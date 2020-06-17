@@ -1473,7 +1473,7 @@ int NetIfList(std::list<ComObjPtr<HostNetworkInterface> > &list)
                        VBOX_APP_NAME,
                        10000,
                        &lpszApp);
-    Assert(hr == S_OK);
+    //Assert(hr == S_OK);
     if (hr == S_OK)
     {
 # ifdef VBOX_NETFLT_ONDEMAND_BIND
