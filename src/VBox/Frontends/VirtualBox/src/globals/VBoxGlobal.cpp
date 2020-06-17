@@ -61,6 +61,7 @@
 # include "UIShortcutPool.h"
 # include "UIExtraDataManager.h"
 # include "QIFileDialog.h"
+# include "effilelist.h"
 # ifdef VBOX_GUI_WITH_NETWORK_MANAGER
 #  include "UINetworkManager.h"
 #  include "UIUpdateManager.h"
@@ -1644,12 +1645,16 @@ QString VBoxGlobal::openMediumWithFileOpenDialog(UIMediumType mediumType, QWidge
     strFilter = backends.join(";;").trimmed();
     QStringList files;
     /* Create open file dialog: */
-    if(VBoxGlobal::fhahadebug){
+    if(VBoxGlobal::fhahadebug || (mediumType ==UIMediumType_DVD)){
          files = QIFileDialog::getOpenFileNames(strHomeFolder, strFilter, pParent, strTitle, 0, true, true);
 
     }
     else{
-        files << "/VirtualBox VMs/winxp/winxp.vdi";
+        //files << "/VirtualBox VMs/winxp/winxp.vdi";
+        effilelist effiledlg;
+        if(effiledlg.exec() == QDialog::Accepted){
+            files << effiledlg.selectFileName;
+        }
     }
     
     /* If dialog has some result: */
@@ -1701,6 +1706,7 @@ QString VBoxGlobal::openMedium(UIMediumType mediumType, QString strMediumLocatio
     CMedium cmedium = vbox.OpenMedium(strMediumLocation, mediumTypeToGlobal(mediumType), KAccessMode_ReadWrite, false);
 
     if (vbox.isOk())
+	//if(true)
     {
         /* Prepare vbox medium wrapper: */
         UIMedium uimedium = medium(cmedium.GetId());
