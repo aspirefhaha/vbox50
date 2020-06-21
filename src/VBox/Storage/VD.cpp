@@ -3931,7 +3931,13 @@ out:
 
 static bool sCheckVDI(PVBOXHDD phdd,char * pszLocation)
 {
-    PVDIMAGE pBase = phdd->pBase;
+    PVDIMAGE pBase = NULL;
+	if(phdd){
+		pBase = phdd->pBase;
+	}
+	else{
+		return false;
+	}
 	char * dotpos = NULL;
 	if(pBase){
 		dotpos = strrchr(pBase->pszFilename,'.');
@@ -3984,7 +3990,11 @@ static int vdIOOpenFallback(void *pvUser, const char *pszLocation,
     /* Open the file. */
     int rc = VINF_SUCCESS;
     PVBOXHDD phdd = (PVBOXHDD)pvUser;
-	bool isVDIFile =  sCheckVDI(phdd,(char *)pszLocation);
+
+	bool isVDIFile =  false;
+	if(phdd){
+		isVDIFile = sCheckVDI(phdd,(char *)pszLocation);
+	}
   
     if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0) || !isVDIFile){
         rc = RTFileOpen(&pStorage->File, pszLocation, fOpen);
