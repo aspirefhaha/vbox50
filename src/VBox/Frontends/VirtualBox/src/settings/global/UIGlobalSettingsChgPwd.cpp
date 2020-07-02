@@ -78,7 +78,9 @@ void UIGlobalSettingsChgPwd::accept()
         oriPwd = userInfo.GetUserpwd();
     if(oldPwd == oriPwd){
         if(newPwd != verifyPwd){
-            QMessageBox::warning(NULL,"Password Err", "New Password is <font color='red'>not matched</font> with verify Password!");
+            QMessageBox::warning(NULL,
+                        QApplication::translate("UIGlobalSettingsChgPwd", "Password Err"), 
+                        QApplication::translate("UIGlobalSettingsChgPwd", "New Password is &lt;font color='red'&gt;not matched&lt;/font&gt; with verify Password!"));
             return;
         }
         if(curusr == "admin"){
@@ -87,15 +89,19 @@ void UIGlobalSettingsChgPwd::accept()
         else{
             userInfo.SetUserpwd(newPwd);
         }
+        
         QDateTime current_date_time =QDateTime::currentDateTime();
         QString current_date =current_date_time.toString("yyyy.MM.dd hh:mm:ss.zzz");
         vboxGlobal().virtualBox().SetExtraData("safeenvlastsave",current_date);
+        QMessageBox::information(NULL,QApplication::translate("UIGlobalSettingsChgPwd", "Success"),
+                    QApplication::translate("UIGlobalSettingsChgPwd", "Change Password Successfully"));
         return QDialog::accept();
         
     }
     else{
         //QMessageBox::information(NULL, "Old Password Err", "Old Password is not match!", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
-        QMessageBox::warning(NULL,"Password Err", "Old Password is <font color='red'>not matched</font>");
+        QMessageBox::warning(NULL, QApplication::translate("UIGlobalSettingsChgPwd", "Password Err"), 
+                        QApplication::translate("UIGlobalSettingsChgPwd", "Old Password is &lt;font color='red'&gt;not matched&lt;/font&gt;"));
     }
 }
 

@@ -50,6 +50,8 @@ UIGlobalSettingsSafeEnv::UIGlobalSettingsSafeEnv(QWidget * parent)
     int checked = vbox.GetExtraDataInt("selfDestroy");
 
     ui->cb_SelfDestroy->setCheckState(checked?Qt::Checked : Qt::Unchecked);
+    checked = vbox.GetExtraDataInt("InOutThrough");
+    ui->cbInOutThrough->setCheckState(checked?Qt::Checked: Qt::Unchecked);
 }
 
 UIGlobalSettingsSafeEnv::~UIGlobalSettingsSafeEnv()
@@ -62,6 +64,12 @@ void UIGlobalSettingsSafeEnv::retranslateUi()
     /* Translate uic generated strings: */
     ui->retranslateUi(this);
 
+}
+
+void UIGlobalSettingsSafeEnv::sltSetInOutThrough(bool des)
+{
+    CVirtualBox vbox = vboxGlobal().virtualBox();
+    vbox.SetExtraDataInt("InOutThrough",des?1:0);
 }
 
 void UIGlobalSettingsSafeEnv::resetUserCount()
@@ -95,7 +103,8 @@ void UIGlobalSettingsSafeEnv::resetUserPwd()
     QDateTime current_date_time =QDateTime::currentDateTime();
     QString current_date =current_date_time.toString("yyyy.MM.dd hh:mm:ss.zzz");
     vbox.SetExtraData("safeenvlastsave",current_date);
-    
+    QMessageBox::information(NULL,QApplication::translate("UIGlobalSettingsSafeEnv", "Success"),
+                    QApplication::translate("UIGlobalSettingsSafeEnv", "Change User Password Successfully"));
 }
 
 void UIGlobalSettingsSafeEnv::accept()

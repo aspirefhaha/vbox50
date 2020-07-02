@@ -30,6 +30,17 @@
     </message>
 </context>
 <context>
+    <name>UIGlobalSettingsChgPwd</name>
+    <message>
+        <source>Success</source>
+        <translation>修改完成</translation>
+    </message>
+    <message>
+        <source>Password Change Successfully</source>
+        <translation>密码修改完成</translation>
+    </message>
+</context>
+<context>
     <name>QApplication</name>
     <message>
         <source>Executable &lt;b&gt;%1&lt;/b&gt; requires Qt %2.x, found Qt %3.</source>
@@ -201,6 +212,22 @@
 </context>
 <context>
     <name>UIActionPool</name>
+    <message>
+        <source>&amp;User</source>
+        <translation>安全管理</translation>
+    </message>
+    <message>
+        <source>Change Password</source>
+        <translation>修改密码</translation>
+    </message>
+    <message>
+        <source>Safe Setting</source>
+        <translation>安全设置</translation>
+    </message>
+    <message>
+        <source>ChgPwd</source>
+        <translation type="obsolete">修改密码</translation>
+    </message>
     <message>
         <source>&amp;Machine</source>
         <translation>控制(&amp;M)</translation>
@@ -10374,6 +10401,53 @@
     </message>
 </context>
 <context>
+    <name>UIWizardLogin</name>
+    <message>
+        <source>Destroy Now!!</source>
+        <translation>私有数据已经清空！！</translation>
+    </message>
+    <message>
+        <source>Change Pwd</source>
+        <translation>修改密码</translation>
+    </message>
+    <message>
+        <source>Admin</source>
+        <translation>管理员</translation>
+    </message>
+    <message>
+        <source>Role</source>
+        <translation>角色</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>密码</translation>
+    </message>
+    <message>
+        <source>Login</source>
+        <translation>登录</translation>
+    </message>
+    <message>
+        <source>Enter</source>
+        <translation>确认</translation>
+    </message>
+    <message>
+        <source>User</source>
+        <translation>普通用户</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;Please select a role for further operations, Admin can change all USB virtual enviroment config.User can only modify few virtual config.Don&#x27;t forget enter password for the role you choosed&lt;/p&gt;</source>
+        <translation>选择角色，然后输入密码，管理员可以进行安全环境的配置管理，普通用户只能修改自己的密码或直接进入安全环境！</translation>
+    </message>
+    <message>
+        <source>Login Failed as&lt;font color=red&gt; Admin&lt;/font&gt;,Left &lt;font color=red&gt;%1&lt;/font&gt; Chances!</source>
+        <translation>作为&lt;font color=red&gt;管理员&lt;/font&gt;登陆失败，剩余&lt;font color=red&gt;%1&lt;/font&gt;次机会，当剩余0次时，本产品可能&lt;font color=red&gt;清除所有数据！！！&lt;/font&gt;</translation>
+    </message>
+    <message>
+        <source>Login Failed as &lt;font color=red&gt;User&lt;/font&gt;,Left &lt;font color=red&gt;%1&lt;/font&gt; Chances!</source>
+        <translation>作为&lt;font color=red&gt;普通用户&lt;/font&gt;登陆失败，剩余&lt;font color=red&gt;%1&lt;/font&gt;次机会!</translation>
+    </message>
+</context>
+<context>
     <name>UIWizardFirstRun</name>
     <message>
         <source>Select start-up disk</source>
@@ -12799,8 +12873,9 @@
     <name>VBoxSelectorWnd</name>
     <message>
         <source>&amp;Settings...</source>
-        <translation type="obsolete">设置(&amp;S)...</translation>
+        <translation type="obsolete">设置1</translation>
     </message>
+     
     <message>
         <source>Configure the selected virtual machine</source>
         <translation type="obsolete">设置所选的虚拟电脑</translation>

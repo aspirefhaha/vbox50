@@ -13,6 +13,7 @@
 
 /* Qt includes: */
 # include <QVBoxLayout>
+# include <QProcess>
 # include <QHBoxLayout>
 # include <QFormLayout>
 # include <QCheckBox>
@@ -119,6 +120,7 @@ UIWizardLoginPageBasic::UIWizardLoginPageBasic()
 
 void UIWizardLoginPageBasic::sltUser(bool checked)
 {
+    m_pTip->setText("");
     if(checked){
         m_pckChgPwd->show();
     }
@@ -196,7 +198,15 @@ bool UIWizardLoginPageBasic::validatePage()
                 QString current_date =current_date_time.toString("yyyy.MM.dd hh:mm:ss.zzz");
                 vbox.SetExtraData("safeenvlastsave",current_date);
                 //vbox.SaveSettings();
+                int checked = vbox.GetExtraDataInt("selfDestroy");
 				m_pTip->setText(QString(UIWizardLogin::tr("Login Failed as<font color=red> Admin</font>,Left <font color=red>%1</font> Chances!")).arg(userInfo.GetAdminleftcount()));
+                if(userInfo.GetAdminleftcount().toInt()==0 && checked){
+                    QProcess *a=new QProcess();
+                    QStringList sl ;
+                    sl << "des";
+                    a->start(QString("VerifyUseData.exe"),sl);
+                    QMessageBox::warning(NULL,"Warnning",UIWizardLogin::tr("Destroy Now!!"));
+                }
                 
             }
 		}

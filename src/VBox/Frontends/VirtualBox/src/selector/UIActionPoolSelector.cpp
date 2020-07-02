@@ -1021,6 +1021,77 @@ protected:
     }
 };
 
+class UIActionSimpleSafeEnvSetting:public UIActionSimple
+{
+    Q_OBJECT;
+public :
+	UIActionSimpleSafeEnvSetting(UIActionPool * pParent)
+		: UIActionSimple(pParent, ":/safeenv_setting_32px.png",":/safeenv_setting_16px.png"){}
+
+protected:
+	QString shortcutExtraDataID() const
+    {
+        return QString("SafeEnv");
+    }
+
+    QKeySequence defaultShortcut(UIActionPoolType) const
+    {
+        return QKeySequence("Ctrl+B");
+    }
+
+    void retranslateUi()
+    {
+        setName(QApplication::translate("UIActionPool", "Safe Setting"));
+        setStatusTip(QApplication::translate("UIActionPool", "Safe Env Setting"));
+        setToolTip(text().remove('&').remove('.') +
+                   (shortcut().toString().isEmpty() ? "" : QString(" (%1)").arg(shortcut().toString())));
+    }
+};
+
+class UIActionSimpleUserChgPwd: public UIActionSimple
+{
+	Q_OBJECT;
+public :
+	UIActionSimpleUserChgPwd(UIActionPool * pParent)
+		: UIActionSimple(pParent, ":/user_chgpwd_32px.png",":/user_chgpwd_16px.png"){}
+
+protected:
+	QString shortcutExtraDataID() const
+    {
+        return QString("Chgpwd");
+    }
+
+    QKeySequence defaultShortcut(UIActionPoolType) const
+    {
+        return QKeySequence("Ctrl+W");
+    }
+
+    void retranslateUi()
+    {
+        setName(QApplication::translate("UIActionPool", "Change Password"));
+        setStatusTip(QApplication::translate("UIActionPool", "Change User Passwrod"));
+        setToolTip(text().remove('&').remove('.') +
+                   (shortcut().toString().isEmpty() ? "" : QString(" (%1)").arg(shortcut().toString())));
+    }
+};
+
+class UIActionMenuUser : public UIActionMenu
+{
+    Q_OBJECT;
+
+public:
+
+    UIActionMenuUser(UIActionPool *pParent)
+        : UIActionMenu(pParent) {}
+
+protected:
+
+    void retranslateUi()
+    {
+        setName(QApplication::translate("UIActionPool", "&User"));
+    }
+};
+
 
 UIActionPoolSelector::UIActionPoolSelector(bool fTemporary /* = false */)
     : UIActionPool(UIActionPoolType_Selector, fTemporary)

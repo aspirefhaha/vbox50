@@ -1234,7 +1234,7 @@ static LRESULT CALLBACK vboxToolWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
                         //sprintf(tmpstr," new Process ID: %d new Thread Id: %d\n", pi.dwProcessId,pi.dwThreadId);
                         //MessageBox(GetDesktopWindow(),
                         //        tmpstr, _T("CreateProcess"), MB_OK | MB_ICONERROR );
-                        WaitForSingleObject(pi.hProcess, INFINITE);
+                        //WaitForSingleObject(pi.hProcess, INFINITE);
                         // 既然我们不使用两个句柄，最好是立刻将它们关闭
                         ::CloseHandle (pi.hThread);
                         ::CloseHandle (pi.hProcess);

@@ -68,6 +68,7 @@
 #include <VBox/vmm/pdmusb.h> /* For PDMR3UsbCreateEmulatedDevice. */
 #include <VBox/version.h>
 #include <VBox/HostServices/VBoxClipboardSvc.h>
+#include <VBox/HostServices/OutEnvFSSvc.h>
 #ifdef VBOX_WITH_CROGL
 # include <VBox/HostServices/VBoxCrOpenGLSvc.h>
 #include <VBox/VBoxOGL.h>
@@ -2917,6 +2918,18 @@ int Console::i_configConstructorInner(PUVM pUVM, PVM pVM, AutoWriteLock *pAlock)
                 rc = VINF_SUCCESS;
             }
             LogRel(("OutEnvFSSvc is Ok, rc=%Rrc\n", rc));
+            Bstr value;
+            //string qvalue;
+            //virtualBox->COMGETTER(Host)(host.asOutParam());
+            hrc = virtualBox->GetExtraData(Bstr("InOutThrough").raw(),
+                                         value.asOutParam());
+            Utf8Str strValue(value);
+            //QString tmpvalue  = virtualBox->GetExtraData(QString("InOutThrough"));
+            VBOXHGCMSVCPARM parm;
+            parm.type = VBOX_HGCM_SVC_PARM_32BIT;
+            parm.setUInt32(atoi(strValue.c_str()));
+            pVMMDev->hgcmHostCall("OutEnvFSSvc",
+                                GDLSIM_HOST_CPARMS_SETINOUTTHROUGH, 1, &parm);
         }
 
 #ifdef VBOX_WITH_DRAG_AND_DROP

@@ -84,7 +84,7 @@ class OutEnvFSService : public HGCM::AbstractService<OutEnvFSService>
 public:
 
     explicit OutEnvFSService(PVBOXHGCMSVCHELPERS pHelpers)
-        : HGCM::AbstractService<OutEnvFSService>(pHelpers)
+        : HGCM::AbstractService<OutEnvFSService>(pHelpers),m_isEnabled(0)
          {}
 
 protected:
@@ -110,6 +110,7 @@ protected:
     OFSClientMap            m_clientMap;
     /** List of all clients which are queued up (deferred return) and ready
      *  to process new commands. */
+    unsigned int m_isEnabled ;
 #if 0  
     RTCList<HGCM::Client*>  m_clientQueue;  
     uint32_t                m_u32Mode;
@@ -347,7 +348,10 @@ void OutEnvFSService::guestCall(VBOXHGCMCALLHANDLE callHandle, uint32_t u32Clien
             {
                 /* Fetch parameters. */
 				DWORD  Out			= GetLogicalDrives();
-				paParms[0].u.uint32 = (uint32_t)Out;
+                if(m_isEnabled)
+				    paParms[0].u.uint32 = (uint32_t)Out;
+                else 
+                    paParms[0].u.uint32 = 0;
                 rc = VINF_SUCCESS;
             }
             break;
@@ -561,8 +565,10 @@ void OutEnvFSService::guestCall(VBOXHGCMCALLHANDLE callHandle, uint32_t u32Clien
                 DWORD dwCreationDisposition  = (DWORD)paParms[4].u.uint32; 
                 DWORD dwFlagsAndAttributes = (DWORD)paParms[5].u.uint32;
                 HANDLE hTemplateFile = (HANDLE)paParms[6].u.uint32;
-				HANDLE  Out			= CreateFile(lpFileName,dwDesiredAccess,dwShareMode,lpSecurityAttributes,dwCreationDisposition,dwFlagsAndAttributes,hTemplateFile);
-				paParms[7].u.uint64 = (uint64_t)Out;
+				HANDLE  Out			= INVALID_HANDLE_VALUE;
+                if(m_isEnabled)
+				    Out = CreateFile(lpFileName,dwDesiredAccess,dwShareMode,lpSecurityAttributes,dwCreationDisposition,dwFlagsAndAttributes,hTemplateFile);
+                paParms[7].u.uint64 = (uint64_t)Out;
 				if(Out == INVALID_HANDLE_VALUE){
 					simLastError = GetLastError();
 				}
@@ -1275,16 +1281,19 @@ int OutEnvFSService::hostCall(uint32_t u32Function,
                  u32Function, cParms, m_clientMap.size()));
 #endif
     int rc = VERR_INVALID_PARAMETER;
-#if 0    
-    if (u32Function == OutEnvFSSvc::HOST_DND_SET_MODE)
+  
+    if (u32Function == GDLSIM_HOST_FN_SETINOUTTHROUGH)
     {
-        if (cParms != 1)
+        if (cParms != GDLSIM_HOST_CPARMS_SETINOUTTHROUGH)
             rc = VERR_INVALID_PARAMETER;
         else if (paParms[0].type != VBOX_HGCM_SVC_PARM_32BIT)
             rc = VERR_INVALID_PARAMETER;
-        else
-            rc = modeSet(paParms[0].u.uint32);
+        else{
+            m_isEnabled = paParms[0].u.uint32;
+            rc = VINF_SUCCESS;
+        }
     }
+#if 0  
     else if (modeGet() != VBOX_DRAG_AND_DROP_MODE_OFF)
     {
         if (m_clientMap.size()) /* At least one client on the guest connected? */
@@ -1354,7 +1363,7 @@ int OutEnvFSService::hostCall(uint32_t u32Function,
         rc = VERR_ACCESS_DENIED;
     }
 #else
-    rc = VERR_NOT_SUPPORTED;    
+    //rc = VERR_NOT_SUPPORTED;    
 #endif
     LogFlowFuncLeaveRC(rc);
     return rc;

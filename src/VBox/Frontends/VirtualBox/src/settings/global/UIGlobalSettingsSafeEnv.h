@@ -42,6 +42,7 @@ public slots:
     void resetUserCount();
     void resetUserPwd();
     void setSelfDestroy(bool);
+    void sltSetInOutThrough(bool);
 
 protected:
 

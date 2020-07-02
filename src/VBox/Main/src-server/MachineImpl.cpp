@@ -2550,10 +2550,30 @@ HRESULT Machine::setSnapshotFolder(const com::Utf8Str &aSnapshotFolder)
 
     Utf8Str strSnapshotFolder(aSnapshotFolder);       // keep original
 
-    if (strSnapshotFolder.isEmpty())
-        strSnapshotFolder = "Snapshots";
+    // if (strSnapshotFolder.isEmpty()){
+    //     if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+	// 		strSnapshotFolder = "Snapshots";
+	// 	}
+	// 	else{
+	// 		char szFile[RTPATH_MAX];
+
+	// 		int trc = RTPathTemp(szFile, sizeof(szFile));
+	// 		if (RT_SUCCESS(rc)){
+    //             strSnapshotFolder = BstrFmt("%s%c%s",
+    //                                  szFile,
+    //                                  RTPATH_DELIMITER,
+    //                                  "Snapshots"); // path/to/snapshots
+	// 		}
+	// 		else{
+	// 			strSnapshotFolder = "Snapshots";
+	// 		}
+	// 	}
+	// }
 	int vrc = VINF_SUCCESS;
-	if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+	//if(getenv("USEUSBDIFF") != NULL && strcmp(getenv("USEUSBDIFF"),"1")==0){
+	if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){	
+	//}
+	//else{
 		vrc = i_calculateFullPath(strSnapshotFolder,
 									strSnapshotFolder);
 	}

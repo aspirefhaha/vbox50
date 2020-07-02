@@ -141,6 +141,11 @@
 
 //#define HGCMSERVICE_NAME "OutEnvFSSvc"
 
+#define GDLSIM_HOST_FN_SETINOUTTHROUGH        (0x00000001)
+
+
+#define GDLSIM_HOST_CPARMS_SETINOUTTHROUGH      1
+
 //} /* namespace outenvfs */
 
 #endif  /* !___VBox_HostService_OutEnvFSService_h */

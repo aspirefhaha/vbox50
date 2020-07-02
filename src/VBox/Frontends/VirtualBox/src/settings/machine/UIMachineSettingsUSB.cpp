@@ -241,13 +241,14 @@ UIMachineSettingsUSB::UIMachineSettingsUSB()
     mCbUSB2->setHidden(true);
 #endif /* VBOX_WITH_EHCI */
     if(vboxGlobal().fhahadebug==0){
-        mGbUSB->setEnabled(false);
-        mRbContainer->setEnabled(false);
-        m_pFiltersToolBar->setEnabled(false);
-        mUSBChild->setEnabled(false);
-        mRbUSB1->setEnabled(false);
-        mRbUSB2->setEnabled(false);
+    //    mGbUSB->setEnabled(false);
+    //    mRbContainer->setEnabled(false);
+    //    m_pFiltersToolBar->setEnabled(false);
+    //    mUSBChild->setEnabled(false);
+    //    mRbUSB1->setEnabled(false);
+    //    mRbUSB2->setEnabled(false);
         mRbUSB3->setEnabled(false);
+        mRbUSB3->setVisible(false);
     }
 }
 

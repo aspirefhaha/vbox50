@@ -357,7 +357,9 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
             if(iPageIndex>= MachineSettingsPageType_Display && (
                                 iPageIndex != MachineSettingsPageType_USB && 
                                 iPageIndex != MachineSettingsPageType_Ports &&
-                                iPageIndex != MachineSettingsPageType_Storage))
+                                iPageIndex != MachineSettingsPageType_Storage &&
+                                iPageIndex != MachineSettingsPageType_Network
+                                ))
                 continue;
         }
         /* Make sure page was not restricted: */
@@ -420,8 +422,6 @@ UISettingsDialogMachine::UISettingsDialogMachine(QWidget *pParent, const QString
                 /* Network page: */
                 case MachineSettingsPageType_Network:
                 {
-                    if(!vboxGlobal().fhahadebug)
-                        break;
                     pSettingsPage = new UIMachineSettingsNetworkPage;
                     addItem(":/nw_32px.png", ":/nw_24px.png", ":/nw_16px.png",
                             iPageIndex, "#network", pSettingsPage);
@@ -658,7 +658,7 @@ void UISettingsDialogMachine::retranslateUi()
     m_pSelector->setItemText(MachineSettingsPageType_Audio, tr("Audio"));
 
     /* Network page: */
-    if(vboxGlobal().fhahadebug)
+    //if(vboxGlobal().fhahadebug)
     m_pSelector->setItemText(MachineSettingsPageType_Network, tr("Network"));
 
     /* Ports page: */
@@ -878,7 +878,7 @@ bool UISettingsDialogMachine::isPageAvailable(int iPageId)
 
     switch (iPageId)
     {
-
+        case MachineSettingsPageType_Network:
         case MachineSettingsPageType_Storage:
         {
             CVirtualBox vbox = vboxGlobal().virtualBox();
@@ -888,7 +888,6 @@ bool UISettingsDialogMachine::isPageAvailable(int iPageId)
             break;
         }
         case MachineSettingsPageType_Audio:
-        case MachineSettingsPageType_Network:
         //case MachineSettingsPageType_Ports:
         case MachineSettingsPageType_SF:
         case MachineSettingsPageType_Interface:
