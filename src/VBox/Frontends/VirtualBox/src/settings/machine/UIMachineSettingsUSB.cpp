@@ -246,7 +246,8 @@ UIMachineSettingsUSB::UIMachineSettingsUSB()
     //    m_pFiltersToolBar->setEnabled(false);
     //    mUSBChild->setEnabled(false);
     //    mRbUSB1->setEnabled(false);
-    //    mRbUSB2->setEnabled(false);
+        mRbUSB2->setEnabled(false);
+        mRbUSB2->setVisible(false);
         mRbUSB3->setEnabled(false);
         mRbUSB3->setVisible(false);
     }

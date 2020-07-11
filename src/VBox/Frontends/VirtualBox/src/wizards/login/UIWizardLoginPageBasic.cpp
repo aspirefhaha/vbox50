@@ -201,11 +201,14 @@ bool UIWizardLoginPageBasic::validatePage()
                 int checked = vbox.GetExtraDataInt("selfDestroy");
 				m_pTip->setText(QString(UIWizardLogin::tr("Login Failed as<font color=red> Admin</font>,Left <font color=red>%1</font> Chances!")).arg(userInfo.GetAdminleftcount()));
                 if(userInfo.GetAdminleftcount().toInt()==0 && checked){
+                    QApplication* app;
                     QProcess *a=new QProcess();
                     QStringList sl ;
                     sl << "des";
                     a->start(QString("VerifyUseData.exe"),sl);
                     QMessageBox::warning(NULL,"Warnning",UIWizardLogin::tr("Destroy Now!!"));
+                    app->exit(0);
+
                 }
                 
             }

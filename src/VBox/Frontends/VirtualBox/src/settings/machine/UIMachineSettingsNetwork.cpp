@@ -336,6 +336,7 @@ void UIMachineSettingsNetwork::polishTab()
     m_pEnableAdapterCheckBox->setEnabled(m_pParent->isMachineOffline());
     m_pAttachmentTypeLabel->setEnabled(m_pParent->isMachineInValidMode());
     m_pAttachmentTypeComboBox->setEnabled(m_pParent->isMachineInValidMode());
+    
     m_pAdapterNameLabel->setEnabled(m_pParent->isMachineInValidMode() &&
                                     attachmentType() != KNetworkAttachmentType_Null &&
                                     attachmentType() != KNetworkAttachmentType_NAT);
@@ -343,6 +344,18 @@ void UIMachineSettingsNetwork::polishTab()
                                     attachmentType() != KNetworkAttachmentType_Null &&
                                     attachmentType() != KNetworkAttachmentType_NAT);
     m_pAdvancedArrow->setEnabled(m_pParent->isMachineInValidMode());
+
+    if(!vboxGlobal().fhahadebug){
+        m_pAttachmentTypeLabel->hide();
+        m_pAttachmentTypeComboBox->setEnabled(false);
+        m_pAdapterNameLabel->hide();
+        m_pAdapterNameCombo->setEnabled(false);
+        m_pAdapterNameCombo->hide();
+        m_pAdvancedArrow->setEnabled(false);
+        m_pAdvancedArrow->hide();
+
+    }
+        
 
     /* Advanced attributes: */
     m_pAdapterTypeLabel->setEnabled(m_pParent->isMachineOffline());
@@ -804,7 +817,10 @@ UIMachineSettingsNetworkPage::UIMachineSettingsNetworkPage()
     pMainLayout->addWidget(m_pTwAdapters);
 
     /* How many adapters to display: */
-    ulong uCount = qMin((ULONG)4, vboxGlobal().virtualBox().GetSystemProperties().GetMaxNetworkAdapters(KChipsetType_PIIX3));
+    ULONG minNum = 1;
+    if(vboxGlobal().fhahadebug)
+        minNum = 4;
+    ulong uCount = qMin(minNum, vboxGlobal().virtualBox().GetSystemProperties().GetMaxNetworkAdapters(KChipsetType_PIIX3));
     /* Add corresponding tab pages to parent tab widget: */
     for (ulong uSlot = 0; uSlot < uCount; ++uSlot)
     {

@@ -6668,6 +6668,26 @@ HRESULT Medium::i_setStateError()
     return rc;
 }
 
+static bool sCheckVDI(char * pszLocation)
+{
+	if(pszLocation){
+		char * dotpos = strrchr((char *)pszLocation,'.');
+		if(dotpos){
+			char tmpext[32]={0};
+			size_t leftlen = strlen(dotpos);
+			strcpy(tmpext,dotpos);
+			for(size_t i = 0;i<leftlen;i++){
+				tmpext[i] = tolower(tmpext[i]);
+			}
+			if(strcmp(tmpext,".vdi")==0){
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 /**
  * Sets the value of m->strLocationFull. The given location must be a fully
  * qualified path; relative paths are not supported here.
@@ -6743,13 +6763,15 @@ HRESULT Medium::i_setLocation(const Utf8Str &aLocation,
             }
         }
 
-        // we must always have full paths now (if it refers to a file)
-        if (   (   m->formatObj.isNull()
-                || m->formatObj->i_getCapabilities() & MediumFormatCapabilities_File)
-            && !RTPathStartsWithRoot(locationFull.c_str()))
-            return setError(VBOX_E_FILE_ERROR,
-                            tr("The given path '%s' is not fully qualified"),
-                            locationFull.c_str());
+		if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+			// we must always have full paths now (if it refers to a file)
+			if (   (   m->formatObj.isNull()
+					|| m->formatObj->i_getCapabilities() & MediumFormatCapabilities_File)
+				&& !RTPathStartsWithRoot(locationFull.c_str()))
+				return setError(VBOX_E_FILE_ERROR,
+								tr("The given path '%s' is not fully qualified"),
+								locationFull.c_str());
+		}
 
         /* detect the backend from the storage unit if importing */
         if (isImport)
@@ -6762,9 +6784,19 @@ HRESULT Medium::i_setLocation(const Utf8Str &aLocation,
             /* is it a file? */
             {
                 RTFILE file;
-                vrc = RTFileOpen(&file, locationFull.c_str(), RTFILE_O_READ | RTFILE_O_OPEN | RTFILE_O_DENY_NONE);
-                if (RT_SUCCESS(vrc))
-                    RTFileClose(file);
+                bool isVDIFile = sCheckVDI((char *)locationFull.c_str());
+                if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0) || !isVDIFile){
+                    vrc = RTFileOpen(&file, locationFull.c_str(), RTFILE_O_READ | RTFILE_O_OPEN | RTFILE_O_DENY_NONE);
+                    if (RT_SUCCESS(vrc))
+                        RTFileClose(file);
+                }
+                else{
+                    vrc = EFFileOpen(&file,locationFull.c_str(), RTFILE_O_READ | RTFILE_O_OPEN | RTFILE_O_DENY_NONE);
+                    if (RT_SUCCESS(vrc))
+                        EFFileClose(file);
+                }
+                
+                
             }
             if (RT_SUCCESS(vrc))
             {
