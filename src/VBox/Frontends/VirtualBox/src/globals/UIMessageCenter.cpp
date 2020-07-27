@@ -1061,12 +1061,20 @@ bool UIMessageCenter::confirmSettingsReloading(QWidget *pParent /* = 0*/) const
 
 int UIMessageCenter::confirmHardDiskAttachmentCreation(const QString &strControllerName, QWidget *pParent /* = 0*/) const
 {
-    return questionTrinary(pParent, MessageType_Question,
+    if(vboxGlobal().fhahadebug)
+        return questionTrinary(pParent, MessageType_Question,
                            tr("<p>You are about to add a virtual hard disk to controller <b>%1</b>.</p>"
                               "<p>Would you like to create a new, empty file to hold the disk contents or select an existing one?</p>")
                               .arg(strControllerName),
                            0 /* auto-confirm id */,
                            tr("Create &new disk"), tr("&Choose existing disk"));
+    else
+        return questionBinary(pParent,MessageType_Question,
+                           tr("<p>You are about to add a virtual hard disk to controller <b>%1</b>.</p>"
+                              "<p>Would you like to create a new, empty file to hold the disk contents or select an existing one?</p>")
+                              .arg(strControllerName),
+                          0 /* auto-confirm id */,
+                          tr("&Choose existing disk"));
 }
 
 int UIMessageCenter::confirmOpticalAttachmentCreation(const QString &strControllerName, QWidget *pParent /* = 0*/) const

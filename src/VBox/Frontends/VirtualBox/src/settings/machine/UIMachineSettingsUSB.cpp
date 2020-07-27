@@ -648,6 +648,12 @@ void UIMachineSettingsUSB::currentChanged(QTreeWidgetItem *aItem)
         aItem->setSelected(true);
 
     /* Update corresponding action states: */
+
+    if(!vboxGlobal().fhahadebug){
+        mNewAction->setEnabled(false);
+        mAddAction->setEnabled(false);
+    }
+
     mEdtAction->setEnabled(aItem);
     mDelAction->setEnabled(aItem);
     mMupAction->setEnabled(aItem && mTwFilters->itemAbove(aItem));

@@ -2907,9 +2907,12 @@ void UIMachineSettingsStorage::sltPrepareOpenMediumMenu()
             case UIMediumType_HardDisk:
             {
                 /* Add "Create a new virtual hard disk" action: */
-                QAction *pCreateNewHardDisk = pOpenMediumMenu->addAction(tr("Create New Hard Disk..."));
-                pCreateNewHardDisk->setIcon(iconPool()->icon(HDNewEn, HDNewDis));
-                connect(pCreateNewHardDisk, SIGNAL(triggered(bool)), this, SLOT(sltCreateNewHardDisk()));
+                if(vboxGlobal().fhahadebug){
+                    QAction *pCreateNewHardDisk = pOpenMediumMenu->addAction(tr("Create New Hard Disk..."));
+                    pCreateNewHardDisk->setIcon(iconPool()->icon(HDNewEn, HDNewDis));
+                    connect(pCreateNewHardDisk, SIGNAL(triggered(bool)), this, SLOT(sltCreateNewHardDisk()));
+                }
+                
                 /* Add "Choose a virtual hard disk file" action: */
                 addChooseExistingMediumAction(pOpenMediumMenu, tr("Choose Virtual Hard Disk File..."));
                 /* Add recent mediums list: */
@@ -3339,12 +3342,21 @@ void UIMachineSettingsStorage::addAttachmentWrapper(KDeviceType deviceType)
     {
         case KDeviceType_HardDisk:
         {
-            int iAnswer = msgCenter().confirmHardDiskAttachmentCreation(strControllerName, this);
-            if (iAnswer == AlertButton_Choice1)
-                strMediumId = getWithNewHDWizard();
-            else if (iAnswer == AlertButton_Choice2)
-                strMediumId = vboxGlobal().openMediumWithFileOpenDialog(UIMediumType_HardDisk, this, strMachineFolder);
-            break;
+            if(vboxGlobal().fhahadebug){
+                int iAnswer = msgCenter().confirmHardDiskAttachmentCreation(strControllerName, this);
+                if (iAnswer == AlertButton_Choice1)
+                    strMediumId = getWithNewHDWizard();
+                else if (iAnswer == AlertButton_Choice2)
+                    strMediumId = vboxGlobal().openMediumWithFileOpenDialog(UIMediumType_HardDisk, this, strMachineFolder);
+                break;
+            }
+            else{
+                int iAnswer = msgCenter().confirmHardDiskAttachmentCreation(strControllerName, this);
+                if (iAnswer == AlertButton_Ok)
+                    strMediumId = vboxGlobal().openMediumWithFileOpenDialog(UIMediumType_HardDisk, this, strMachineFolder);
+                break;
+            }
+            
         }
         case KDeviceType_DVD:
         {
@@ -3455,9 +3467,12 @@ uint32_t UIMachineSettingsStorage::deviceCount (KDeviceType aType) const
 
 void UIMachineSettingsStorage::addChooseExistingMediumAction(QMenu *pOpenMediumMenu, const QString &strActionName)
 {
-    QAction *pChooseExistingMedium = pOpenMediumMenu->addAction(strActionName);
-    pChooseExistingMedium->setIcon(iconPool()->icon(ChooseExistingEn, ChooseExistingDis));
-    connect(pChooseExistingMedium, SIGNAL(triggered(bool)), this, SLOT(sltChooseExistingMedium()));
+    if(vboxGlobal().fhahadebug){
+        QAction *pChooseExistingMedium = pOpenMediumMenu->addAction(strActionName);
+        pChooseExistingMedium->setIcon(iconPool()->icon(ChooseExistingEn, ChooseExistingDis));
+        connect(pChooseExistingMedium, SIGNAL(triggered(bool)), this, SLOT(sltChooseExistingMedium()));
+    }
+    
 }
 
 void UIMachineSettingsStorage::addChooseHostDriveActions(QMenu *pOpenMediumMenu)
