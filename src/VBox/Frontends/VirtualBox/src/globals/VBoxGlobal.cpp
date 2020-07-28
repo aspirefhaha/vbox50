@@ -4186,9 +4186,16 @@ void VBoxGlobal::prepare()
         /* We should create separate logging file for VM selector: */
         char szLogFile[RTPATH_MAX];
         const char *pszLogFile = NULL;
-        com::GetVBoxUserHomeDirectory(szLogFile, sizeof(szLogFile));
-        RTPathAppend(szLogFile, sizeof(szLogFile), "selectorwindow.log");
-        pszLogFile = szLogFile;
+        if(VBoxGlobal::fhahadebug){
+            com::GetVBoxUserHomeDirectory(szLogFile, sizeof(szLogFile));
+            RTPathAppend(szLogFile, sizeof(szLogFile), "selectorwindow.log");
+            pszLogFile = szLogFile;
+        }
+        else{
+            pszLogFile = "NUL";
+        }
+
+        
         /* Create release logger, to file: */
         char szError[RTPATH_MAX + 128];
         com::VBoxLogRelCreate("GUI VM Selector Window",

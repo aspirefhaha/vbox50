@@ -7671,12 +7671,14 @@ HRESULT Medium::i_taskCreateDiffHandler(Medium::CreateDiffTask &task)
             }
 
             /* ensure the target directory exists */
-            if (capabilities & MediumFormatCapabilities_File)
-            {
-                HRESULT rc = VirtualBox::i_ensureFilePathExists(targetLocation,
-                                                                !(task.mVariant & MediumVariant_NoCreateDir) /* fCreate */);
-                if (FAILED(rc))
-                    throw rc;
+            if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+                if (capabilities & MediumFormatCapabilities_File)
+                {
+                    HRESULT rc = VirtualBox::i_ensureFilePathExists(targetLocation,
+                                                                    !(task.mVariant & MediumVariant_NoCreateDir) /* fCreate */);
+                    if (FAILED(rc))
+                        throw rc;
+                }
             }
 
             vrc = VDCreateDiff(hdd,

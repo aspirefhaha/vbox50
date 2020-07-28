@@ -312,6 +312,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     {
         /** @todo Merge this code with server.cpp (use Logging.cpp?). */
         char szLogFile[RTPATH_MAX];
+		if((getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0)){
+			
+		}
+		else{
+			pszLogFile = "NUL";
+		}
         if (!pszLogFile)
         {
             vrc = com::GetVBoxUserHomeDirectory(szLogFile, sizeof(szLogFile));
