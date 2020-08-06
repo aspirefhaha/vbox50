@@ -6873,8 +6873,11 @@ HRESULT Console::i_consoleInitReleaseLog(const ComPtr<IMachine> aMachine)
 
     /* make sure the Logs folder exists */
     Assert(logDir.length());
-    if (!RTDirExists(logDir.c_str()))
-        RTDirCreateFullPath(logDir.c_str(), 0700);
+
+	if(getenv("FHAHADEBUG") != NULL && strcmp(getenv("FHAHADEBUG"),"1")==0){
+		if (!RTDirExists(logDir.c_str()))
+			RTDirCreateFullPath(logDir.c_str(), 0700);
+	}
 
     Utf8Str logFile = Utf8StrFmt("%s%cVBox.log",
                                  logDir.c_str(), RTPATH_DELIMITER);
